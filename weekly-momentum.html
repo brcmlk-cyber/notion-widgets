@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Momentum · Entrepreneur's Mentor OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#090B0A;--s1:#0F1210;--s2:#141A14;--border:rgba(180,220,160,0.08);--text:#E4EDE0;--muted:#5A6E55;--gold:#C9A96E;--green:#7A9E6A;--sage:#9EC47A;--em:#6EC49A;--red:#C4847A;--purple:#9A8EC4;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;padding:36px 16px 60px;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(122,158,106,0.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(201,169,110,0.04) 0%,transparent 50%);pointer-events:none;}
+
+  .header{text-align:center;margin-bottom:32px;}
+  .label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,4vw,36px);font-weight:300;margin-bottom:6px;}
+  h1 em{font-style:italic;color:var(--gold);}
+  .sub{font-size:12px;color:var(--muted);max-width:480px;margin:0 auto;line-height:1.7;}
+
+  .outer{max-width:860px;margin:0 auto;}
+
+  /* WEEK HEADER */
+  .week-bar{background:var(--s1);border:1px solid var(--border);padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .week-info{}
+  .week-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+  .week-dates{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--gold);}
+  .week-nav{display:flex;gap:8px;}
+  .wnav{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;padding:8px 16px;cursor:pointer;transition:all .2s;}
+  .wnav:hover{border-color:var(--green);color:var(--green);}
+
+  /* TOP STATS */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .stat{background:var(--s1);border:1px solid var(--border);padding:18px 16px;text-align:center;}
+  .stat-val{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;margin-bottom:4px;}
+  .stat-lbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+  .stat-bar{height:2px;background:rgba(255,255,255,0.06);margin-top:10px;}
+  .stat-fill{height:2px;transition:width .6s ease;}
+
+  /* GRID */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  .card{background:var(--s1);border:1px solid var(--border);padding:22px;}
+  .card.full{grid-column:1/-1;}
+  .card-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+
+  /* CHECKABLE ITEMS */
+  .check-list{display:flex;flex-direction:column;gap:8px;}
+  .check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--s2);cursor:pointer;user-select:none;transition:all .2s;}
+  .check-item:hover{background:rgba(122,158,106,0.06);}
+  .check-item.done .ci-check{background:var(--green);border-color:var(--green);color:var(--bg);}
+  .check-item.done .ci-text{opacity:.45;text-decoration:line-through;}
+  .ci-check{width:18px;height:18px;border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;transition:all .2s;margin-top:1px;}
+  .ci-text{font-size:12px;line-height:1.5;flex:1;}
+  .ci-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--green);margin-top:10px;text-align:right;}
+
+  .add-row{display:flex;gap:8px;margin-top:10px;}
+  .add-inp{flex:1;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;padding:8px 12px;outline:none;transition:border-color .2s;}
+  .add-inp:focus{border-color:rgba(122,158,106,0.4);}
+  .add-inp::placeholder{color:var(--muted);}
+  .add-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;padding:8px 14px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .add-btn:hover{border-color:var(--green);color:var(--green);}
+
+  /* SIGNAL FIELDS */
+  .field{margin-bottom:14px;}
+  .field label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;}
+  .field input,.field textarea{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;padding:9px 12px;outline:none;resize:none;transition:border-color .2s;}
+  .field input:focus,.field textarea:focus{border-color:rgba(122,158,106,0.4);}
+  .field input::placeholder,.field textarea::placeholder{color:var(--muted);}
+
+  /* MOMENTUM SCORE */
+  .momentum{background:var(--s1);border:1px solid rgba(201,169,110,0.2);padding:24px;margin-bottom:14px;text-align:center;}
+  .mom-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  .mom-score{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:300;line-height:1;color:var(--gold);margin-bottom:8px;}
+  .mom-signal{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:var(--muted);margin-bottom:16px;}
+  .mom-bar-track{height:4px;background:rgba(255,255,255,0.06);margin:0 auto;max-width:300px;}
+  .mom-bar-fill{height:4px;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .8s ease;}
+
+  /* CONTENT OUTPUT */
+  .output-item{padding:12px 16px;background:var(--s2);border-left:2px solid var(--gold);margin-bottom:8px;}
+  .oi-label{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+  .oi-text{font-size:12px;line-height:1.5;}
+
+  @media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}.grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="label">Entrepreneur's Mentor OS · Weekly Momentum</div>
+  <h1>Weekly <em>Momentum</em> Tracker</h1>
+  <p class="sub">Log what shipped, what moved, and what the week proved — before the next week erases it.</p>
+</div>
+
+<div class="outer">
+
+  <!-- WEEK HEADER -->
+  <div class="week-bar">
+    <div class="week-info">
+      <div class="week-label">◈ Current Week</div>
+      <div class="week-dates" id="week-dates">Loading…</div>
+    </div>
+    <div class="week-nav">
+      <button class="wnav" onclick="changeWeek(-1)">← Prev</button>
+      <button class="wnav" onclick="changeWeek(0)">This Week</button>
+      <button class="wnav" onclick="changeWeek(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-val" id="s-shipped" style="color:var(--gold)">0</div>
+      <div class="stat-lbl">Shipped</div>
+      <div class="stat-bar"><div class="stat-fill" id="sf-shipped" style="background:var(--gold);width:0%"></div></div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="s-content" style="color:var(--green)">0</div>
+      <div class="stat-lbl">Content Pieces</div>
+      <div class="stat-bar"><div class="stat-fill" id="sf-content" style="background:var(--green);width:0%"></div></div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="s-impl" style="color:var(--em)">0</div>
+      <div class="stat-lbl">Impl. Tasks Done</div>
+      <div class="stat-bar"><div class="stat-fill" id="sf-impl" style="background:var(--em);width:0%"></div></div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="s-revenue" style="color:var(--purple)">—</div>
+      <div class="stat-lbl">Revenue Signal</div>
+      <div class="stat-bar"><div class="stat-fill" id="sf-revenue" style="background:var(--purple);width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- MOMENTUM SCORE -->
+  <div class="momentum">
+    <div class="mom-label">◈ Weekly Momentum Score</div>
+    <div class="mom-score" id="mom-score">—</div>
+    <div class="mom-signal" id="mom-signal">Complete sections below to calculate.</div>
+    <div class="mom-bar-track"><div class="mom-bar-fill" id="mom-bar" style="width:0%"></div></div>
+  </div>
+
+  <!-- GRID -->
+  <div class="grid">
+
+    <!-- SHIPPED -->
+    <div class="card">
+      <div class="card-title" style="color:var(--gold)">◈ What Shipped This Week</div>
+      <div class="check-list" id="shipped-list"></div>
+      <div class="ci-count" id="shipped-count"></div>
+      <div class="add-row">
+        <input class="add-inp" id="shipped-inp" placeholder="What shipped?" onkeydown="if(event.key==='Enter')addItem('shipped')">
+        <button class="add-btn" onclick="addItem('shipped')">+ Add</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="card">
+      <div class="card-title" style="color:var(--green)">◈ Content Created</div>
+      <div class="check-list" id="content-list"></div>
+      <div class="ci-count" id="content-count"></div>
+      <div class="add-row">
+        <input class="add-inp" id="content-inp" placeholder="Post, video, email, story…" onkeydown="if(event.key==='Enter')addItem('content')">
+        <button class="add-btn" onclick="addItem('content')">+ Add</button>
+      </div>
+    </div>
+
+    <!-- IMPLEMENTATION -->
+    <div class="card">
+      <div class="card-title" style="color:var(--em)">◈ Implementation Progress</div>
+      <div class="check-list" id="impl-list"></div>
+      <div class="ci-count" id="impl-count"></div>
+      <div class="add-row">
+        <input class="add-inp" id="impl-inp" placeholder="Curriculum task, system build…" onkeydown="if(event.key==='Enter')addItem('impl')">
+        <button class="add-btn" onclick="addItem('impl')">+ Add</button>
+      </div>
+    </div>
+
+    <!-- REVENUE + SIGNALS -->
+    <div class="card">
+      <div class="card-title" style="color:var(--purple)">◈ Revenue & Growth Signals</div>
+      <div class="field">
+        <label>Revenue This Week</label>
+        <input id="rev-amount" placeholder="e.g. $0 / $240 / tracking" oninput="updateMomentum()">
+      </div>
+      <div class="field">
+        <label>New Leads or Subscribers</label>
+        <input id="rev-leads" placeholder="e.g. 3 new subscribers" oninput="updateMomentum()">
+      </div>
+      <div class="field">
+        <label>Best Signal This Week</label>
+        <input id="rev-signal" placeholder="DM, testimonial, spike, click…" oninput="updateMomentum()">
+      </div>
+    </div>
+
+    <!-- REVIEW -->
+    <div class="card full">
+      <div class="card-title" style="color:var(--gold)">◈ Weekly Review — In Order</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <div class="field">
+            <label>What the week proved</label>
+            <textarea id="wr-proved" rows="2" placeholder="What did this week confirm about the direction or approach?"></textarea>
+          </div>
+          <div class="field">
+            <label>What the week cost</label>
+            <textarea id="wr-cost" rows="2" placeholder="Time wasted, energy leaked, decision delayed…"></textarea>
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <label>The one correction for next week</label>
+            <textarea id="wr-correction" rows="2" placeholder="Not ten things. One. What changes first?"></textarea>
+          </div>
+          <div class="field">
+            <label>Next week's non-negotiable output</label>
+            <textarea id="wr-output" rows="2" placeholder="What must exist by Friday that doesn't exist today?"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const lists = {shipped:[], content:[], impl:[]};
+let weekOffset = 0;
+
+function getWeekDates(offset=0) {
+  const now = new Date();
+  const day = now.getDay();
+  const mon = new Date(now); mon.setDate(now.getDate() - (day===0?6:day-1) + offset*7);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  return `${fmt(mon)} — ${fmt(sun)}`;
+}
+
+function changeWeek(dir) {
+  if(dir===0) weekOffset=0; else weekOffset+=dir;
+  document.getElementById('week-dates').textContent = getWeekDates(weekOffset);
+}
+
+function addItem(type) {
+  const inp = document.getElementById(`${type}-inp`);
+  const val = inp.value.trim();
+  if(!val) return;
+  lists[type].push({text:val, done:false});
+  inp.value='';
+  renderList(type);
+  updateMomentum();
+}
+
+function toggleItem(type, i) {
+  lists[type][i].done = !lists[type][i].done;
+  renderList(type);
+  updateMomentum();
+}
+
+function renderList(type) {
+  const colors = {shipped:'var(--gold)',content:'var(--green)',impl:'var(--em)'};
+  const el = document.getElementById(`${type}-list`);
+  el.innerHTML = lists[type].map((item,i) => `
+    <div class="check-item${item.done?' done':''}" onclick="toggleItem('${type}',${i})">
+      <div class="ci-check" style="${item.done?`background:${colors[type]};border-color:${colors[type]};color:var(--bg)`:''}">
+        ${item.done?'✓':'—'}
+      </div>
+      <div class="ci-text">${item.text}</div>
+    </div>`).join('');
+
+  const done = lists[type].filter(x=>x.done).length;
+  const total = lists[type].length;
+  const countEl = document.getElementById(`${type}-count`);
+  countEl.textContent = total ? `${done} / ${total} done` : '';
+
+  // Update stat
+  const statEl = document.getElementById(`s-${type}`);
+  statEl.textContent = total;
+  const fillEl = document.getElementById(`sf-${type}`);
+  fillEl.style.width = total ? Math.min(100,total*20)+'%' : '0%';
+}
+
+function updateMomentum() {
+  let score = 0;
+  const shipped = lists.shipped.length;
+  const content = lists.content.length;
+  const impl = lists.impl.filter(x=>x.done).length;
+  const rev = document.getElementById('rev-amount').value.trim();
+  const leads = document.getElementById('rev-leads').value.trim();
+  const signal = document.getElementById('rev-signal').value.trim();
+  const proved = document.getElementById('wr-proved').value.trim();
+  const correction = document.getElementById('wr-correction').value.trim();
+
+  if(shipped > 0) score += Math.min(30, shipped*10);
+  if(content > 0) score += Math.min(25, content*8);
+  if(impl > 0) score += Math.min(20, impl*7);
+  if(rev) score += 10;
+  if(leads) score += 5;
+  if(signal) score += 5;
+  if(proved) score += 5;
+
+  score = Math.min(100, score);
+  document.getElementById('mom-score').textContent = score;
+  document.getElementById('mom-bar').style.width = score+'%';
+
+  let sig;
+  if(score >= 80) sig = "High momentum. This week moved something real.";
+  else if(score >= 60) sig = "Solid week. Consistent output, forward motion.";
+  else if(score >= 40) sig = "Partial week. Something moved — build on it.";
+  else if(score > 0) sig = "Slow week. One output is still forward motion.";
+  else sig = "Complete sections to calculate your weekly signal.";
+  document.getElementById('mom-signal').textContent = sig;
+
+  // Revenue stat
+  const revEl = document.getElementById('s-revenue');
+  revEl.textContent = rev ? (rev.length > 6 ? rev.slice(0,6)+'…' : rev) : '—';
+  document.getElementById('sf-revenue').style.width = rev ? '60%' : '0%';
+}
+
+// Init
+document.getElementById('week-dates').textContent = getWeekDates(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Check-in · Relationship OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0F0A0F;--s1:#160D16;--s2:#1E121E;--border:rgba(220,180,210,0.08);--text:#F0E4F0;--muted:#7A6078;--pink:#C47AAE;--rose:#C4847A;--gold:#C9A96E;--sage:#7A9E8A;--lavender:#9A8EC4;--moon:#D4CCEE;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;padding:36px 16px 60px;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(196,122,174,0.06) 0%,transparent 55%);pointer-events:none;}
+
+  .header{text-align:center;margin-bottom:32px;}
+  .label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,4vw,36px);font-weight:300;margin-bottom:6px;color:var(--moon);}
+  h1 em{font-style:italic;color:var(--pink);}
+  .sub{font-size:12px;color:var(--muted);max-width:480px;margin:0 auto;line-height:1.7;}
+
+  .outer{max-width:860px;margin:0 auto;}
+
+  /* SETUP */
+  .setup{background:var(--s1);border:1px solid var(--border);padding:22px 24px;margin-bottom:16px;}
+  .setup-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+  .setup-field{flex:1;min-width:160px;}
+  .setup-field label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;}
+  .setup-field input{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:300;padding:10px 14px;outline:none;transition:border-color .2s;}
+  .setup-field input:focus{border-color:rgba(196,122,174,0.4);}
+  .setup-field input::placeholder{color:var(--muted);font-style:italic;}
+  .date-display{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;}
+
+  /* CHECKIN GRID */
+  .checkin-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
+  .q-block{background:var(--s1);border:1px solid var(--border);overflow:hidden;}
+  .q-header{padding:14px 20px 10px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:12px;}
+  .q-num{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--pink);}
+  .q-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:300;line-height:1.3;color:var(--moon);}
+  .q-answers{display:grid;grid-template-columns:1fr 1fr;}
+  .q-ans{padding:14px 20px;border-right:1px solid var(--border);}
+  .q-ans:last-child{border-right:none;}
+  .q-ans-label{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .q-ans-label .dot{width:6px;height:6px;border-radius:50%;}
+  .q-ans textarea{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;padding:6px 0;outline:none;resize:none;line-height:1.6;transition:border-color .2s;}
+  .q-ans textarea:focus{border-bottom-color:rgba(196,122,174,0.4);}
+  .q-ans textarea::placeholder{color:var(--muted);font-style:italic;font-size:11px;}
+
+  /* CLOSING */
+  .closing{background:var(--s1);border:1px solid rgba(196,122,174,0.15);padding:24px;margin-bottom:16px;}
+  .closing-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--pink);margin-bottom:16px;}
+  .closing-q{margin-bottom:16px;}
+  .cq-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .cq-input{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:300;padding:10px 14px;outline:none;resize:none;transition:border-color .2s;font-style:italic;}
+  .cq-input:focus{border-color:rgba(196,122,174,0.4);}
+  .cq-input::placeholder{color:var(--muted);}
+
+  /* RATING */
+  .rating-row{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+  .rating-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+  .rating-btns{display:flex;gap:6px;}
+  .r-btn{width:36px;height:36px;background:var(--s2);border:1px solid transparent;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);transition:all .2s;display:flex;align-items:center;justify-content:center;}
+  .r-btn:hover{border-color:rgba(196,122,174,0.3);}
+  .r-btn.sel{background:rgba(196,122,174,0.12);border-color:var(--pink);color:var(--pink);}
+  .rating-val{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--pink);}
+
+  /* SAVE BAR */
+  .save-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;}
+  .save-note{font-size:11px;color:var(--muted);font-style:italic;}
+  .btn-save{background:var(--pink);color:var(--bg);border:none;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:12px 32px;cursor:pointer;transition:all .2s;}
+  .btn-save:hover{background:var(--lavender);}
+
+  /* ARCHIVE */
+  .archive{background:var(--s1);border:1px solid var(--border);padding:20px 24px;margin-bottom:16px;display:none;}
+  .archive.visible{display:block;}
+  .archive-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+  .archive-item{padding:12px 14px;background:var(--s2);margin-bottom:8px;cursor:pointer;transition:all .2s;}
+  .archive-item:hover{background:rgba(196,122,174,0.06);}
+  .ai-date{font-family:'DM Mono',monospace;font-size:9px;color:var(--pink);margin-bottom:4px;}
+  .ai-rating{font-size:11px;color:var(--muted);}
+
+  @media(max-width:560px){.q-answers{grid-template-columns:1fr;}.q-ans{border-right:none;border-bottom:1px solid var(--border);}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="label">Relationship OS · Weekly Check-in</div>
+  <h1>Our <em>Weekly</em> Check-in</h1>
+  <p class="sub">Six questions. Two voices. Answer separately, then share. The ritual that keeps drift from becoming distance.</p>
+</div>
+
+<div class="outer">
+
+  <!-- SETUP -->
+  <div class="setup">
+    <div class="setup-row">
+      <div class="setup-field">
+        <label>Partner X — Name</label>
+        <input id="name-x" placeholder="Your name…">
+      </div>
+      <div class="setup-field">
+        <label>Partner Y — Name</label>
+        <input id="name-y" placeholder="Their name…">
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">◈ Check-in Date</label>
+        <div class="date-display" id="checkin-date"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div class="checkin-grid" id="checkin-grid"></div>
+
+  <!-- RATING + CLOSING -->
+  <div class="closing">
+    <div class="closing-title">◈ Closing Together</div>
+
+    <div class="rating-row">
+      <div class="rating-label">How connected did this week feel overall?</div>
+      <div class="rating-btns" id="rating-btns">
+        <button class="r-btn" onclick="rate(1,this)">1</button>
+        <button class="r-btn" onclick="rate(2,this)">2</button>
+        <button class="r-btn" onclick="rate(3,this)">3</button>
+        <button class="r-btn" onclick="rate(4,this)">4</button>
+        <button class="r-btn" onclick="rate(5,this)">5</button>
+      </div>
+      <div class="rating-val" id="rating-display"></div>
+    </div>
+
+    <div class="closing-q">
+      <div class="cq-label">One thing we want to feel more of next week</div>
+      <input class="cq-input" id="cq-more" placeholder="e.g. lightness, honesty, touch, laughter…">
+    </div>
+    <div class="closing-q">
+      <div class="cq-label">One ritual or moment to protect this coming week</div>
+      <input class="cq-input" id="cq-ritual" placeholder="e.g. Sunday walk, phone-free dinner, morning coffee together…">
+    </div>
+    <div class="closing-q">
+      <div class="cq-label">Anything left unsaid right now?</div>
+      <textarea class="cq-input" id="cq-unsaid" rows="2" placeholder="Say it here, or note it for a repair conversation…"></textarea>
+    </div>
+  </div>
+
+  <!-- SAVE -->
+  <div class="save-bar">
+    <div class="save-note">Answers are private to this session. Copy what matters before closing.</div>
+    <button class="btn-save" onclick="saveEntry()">Save This Week →</button>
+  </div>
+
+  <!-- ARCHIVE -->
+  <div class="archive" id="archive">
+    <div class="archive-title">◈ Previous Check-ins</div>
+    <div id="archive-list"></div>
+  </div>
+
+</div>
+
+<script>
+const qs = [
+  {text: "What felt good between us this week — even something small?", ph:{x:"Something that worked…",y:"What landed well…"}},
+  {text: "What did I need from you that I didn't ask for?", ph:{x:"What I held back…",y:"What I held back…"}},
+  {text: "Where did we repair well — or where do we still need to?", ph:{x:"Conflict, tension, or repair moment…",y:"Their side of it…"}},
+  {text: "Is there anything I've been avoiding saying?", ph:{x:"The thing under the thing…",y:"What's sitting quietly…"}},
+  {text: "What would make next week feel more alive between us?", ph:{x:"More of…",y:"More of…"}},
+  {text: "One thing I want you to know right now:", ph:{x:"Something real…",y:"Something real…"}},
+];
+
+let rating = null;
+let history = [];
+
+function init() {
+  const now = new Date();
+  document.getElementById('checkin-date').textContent = now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const grid = document.getElementById('checkin-grid');
+  grid.innerHTML = qs.map((q,i) => `
+    <div class="q-block">
+      <div class="q-header">
+        <div class="q-num">0${i+1}</div>
+        <div class="q-text">${q.text}</div>
+      </div>
+      <div class="q-answers">
+        <div class="q-ans">
+          <div class="q-ans-label">
+            <div class="dot" style="background:var(--pink)"></div>
+            <span style="color:var(--pink)" id="lbl-x-${i}">Partner X</span>
+          </div>
+          <textarea id="ans-x-${i}" rows="3" placeholder="${q.ph.x}"></textarea>
+        </div>
+        <div class="q-ans">
+          <div class="q-ans-label">
+            <div class="dot" style="background:var(--lavender)"></div>
+            <span style="color:var(--lavender)" id="lbl-y-${i}">Partner Y</span>
+          </div>
+          <textarea id="ans-y-${i}" rows="3" placeholder="${q.ph.y}"></textarea>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Live name update
+  document.getElementById('name-x').addEventListener('input', updateNames);
+  document.getElementById('name-y').addEventListener('input', updateNames);
+}
+
+function updateNames() {
+  const nx = document.getElementById('name-x').value.trim() || 'Partner X';
+  const ny = document.getElementById('name-y').value.trim() || 'Partner Y';
+  qs.forEach((_,i)=>{
+    document.getElementById(`lbl-x-${i}`).textContent = nx;
+    document.getElementById(`lbl-y-${i}`).textContent = ny;
+  });
+}
+
+function rate(n, btn) {
+  rating = n;
+  document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  const labels = ['','Distant','Disconnected','Neutral','Connected','Very close'];
+  document.getElementById('rating-display').textContent = `${n}/5 — ${labels[n]}`;
+}
+
+function saveEntry() {
+  const nx = document.getElementById('name-x').value.trim() || 'X';
+  const ny = document.getElementById('name-y').value.trim() || 'Y';
+  const now = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  history.unshift({date:now,rating:rating,nx,ny});
+  if(history.length>6) history.pop();
+
+  const arch = document.getElementById('archive');
+  arch.classList.add('visible');
+  const list = document.getElementById('archive-list');
+  list.innerHTML = history.map(h=>`
+    <div class="archive-item">
+      <div class="ai-date">${h.date} · ${h.nx} & ${h.ny}</div>
+      <div class="ai-rating">${h.rating ? `Connection: ${h.rating}/5` : 'No rating'}</div>
+    </div>`).join('');
+
+  // Visual feedback
+  const btn = document.querySelector('.btn-save');
+  btn.textContent='✓ Saved'; btn.style.background='var(--sage)';
+  setTimeout(()=>{btn.textContent='Save This Week →';btn.style.background='var(--pink)';},2000);
+}
+
+init();
+</script>
+</body>
+</html>

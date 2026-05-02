@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boundary Script Generator · Standards & Boundaries OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0F0A0F;--s1:#160D16;--s2:#1E121E;
+    --border:rgba(220,180,210,0.08);--text:#F0E4F0;--muted:#7A6078;
+    --pink:#C47AAE;--rose:#C4847A;--gold:#C9A96E;--sage:#7A9E8A;--dust:#B8869E;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;padding:40px 20px 80px;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(196,122,174,0.06) 0%,transparent 55%);pointer-events:none;}
+
+  .header{text-align:center;margin-bottom:36px;}
+  .label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(24px,4.5vw,38px);font-weight:300;margin-bottom:8px;}
+  h1 em{font-style:italic;color:var(--pink);}
+  .sub{font-size:13px;color:var(--muted);max-width:500px;margin:0 auto;line-height:1.7;}
+
+  .main{max-width:800px;margin:0 auto;display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;}
+
+  /* INPUT */
+  .inp{background:var(--s1);border:1px solid var(--border);padding:26px;}
+  .inp-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+
+  .field{margin-bottom:18px;}
+  .field label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;}
+  .field textarea,.field select{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;padding:10px 12px;outline:none;resize:none;transition:border-color .2s;-webkit-appearance:none;}
+  .field textarea:focus,.field select:focus{border-color:rgba(196,122,174,0.4);}
+  .field textarea::placeholder{color:var(--muted);}
+  .field select option{background:#160D16;}
+
+  .pattern-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .pat-btn{padding:10px 8px;background:var(--s2);border:1px solid transparent;cursor:pointer;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);transition:all .2s;text-align:center;}
+  .pat-btn:hover{border-color:rgba(196,122,174,0.3);color:var(--text);}
+  .pat-btn.active{border-color:var(--pink);color:var(--pink);background:rgba(196,122,174,0.06);}
+  .pat-btn .pe{font-size:14px;display:block;margin-bottom:3px;}
+
+  .btn-gen{width:100%;background:var(--pink);color:var(--bg);border:none;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:15px;cursor:pointer;transition:all .25s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:400;}
+  .btn-gen:hover{background:var(--dust);}
+  .btn-gen:disabled{opacity:.4;cursor:not-allowed;}
+  .spin{display:none;width:12px;height:12px;border:2px solid rgba(0,0,0,0.2);border-top-color:var(--bg);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* OUTPUT */
+  .out{display:flex;flex-direction:column;gap:14px;}
+
+  .empty-out{background:var(--s1);border:1px solid var(--border);padding:48px 24px;text-align:center;}
+  .empty-icon{font-size:32px;margin-bottom:14px;opacity:.4;}
+  .empty-text{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;font-style:italic;color:var(--muted);line-height:1.5;}
+
+  .script-card{background:var(--s1);border:1px solid var(--border);padding:22px 24px;}
+  .sc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .sc-type{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;}
+  .sc-copy{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;cursor:pointer;transition:all .2s;}
+  .sc-copy:hover{border-color:var(--pink);color:var(--pink);}
+  .sc-copy.done{border-color:var(--sage);color:var(--sage);}
+  .sc-text{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;line-height:1.7;font-style:italic;color:var(--text);}
+  .sc-note{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5;font-family:'DM Mono',monospace;letter-spacing:.02em;}
+
+  .context-card{background:rgba(196,122,174,0.04);border:1px solid rgba(196,122,174,0.15);padding:20px 24px;}
+  .ctx-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);margin-bottom:10px;}
+  .ctx-text{font-size:13px;line-height:1.7;color:rgba(240,228,240,0.7);}
+
+  @media(max-width:680px){.main{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="label">Standards & Boundaries OS · Boundary Scripts</div>
+  <h1>Boundary <em>Script Generator</em></h1>
+  <p class="sub">Describe the situation. Claude writes three boundary scripts in your pattern's voice — each one shorter, cleaner, and more usable than a perfect speech.</p>
+</div>
+
+<div class="main">
+  <div class="inp">
+    <div class="inp-title">◈ Situation Input</div>
+
+    <div class="field">
+      <label>Your Boundary Pattern</label>
+      <div class="pattern-grid" id="pattern-grid">
+        <button class="pat-btn" onclick="selPat('keeper',this)"><span class="pe">🕊</span>Peace Keeper</button>
+        <button class="pat-btn" onclick="selPat('absorber',this)"><span class="pe">🌊</span>Absorber</button>
+        <button class="pat-btn" onclick="selPat('explainer',this)"><span class="pe">📝</span>Explainer</button>
+        <button class="pat-btn" onclick="selPat('avoider',this)"><span class="pe">🌫</span>Avoider</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>The Situation</label>
+      <textarea id="situation" rows="5" placeholder="Describe what's happening. Who? What are they doing or asking? What do you want to say but haven't?"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Relationship Type</label>
+      <select id="reltype">
+        <option>Romantic partner</option>
+        <option>Close friend</option>
+        <option>Family member</option>
+        <option>Colleague or manager</option>
+        <option>Acquaintance or peer</option>
+        <option>Client or collaborator</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Delivery Mode</label>
+      <select id="mode">
+        <option>In person / face to face</option>
+        <option>Text or message</option>
+        <option>Email</option>
+        <option>Phone or voice note</option>
+      </select>
+    </div>
+
+    <button class="btn-gen" id="gen-btn" onclick="generate()">
+      <div class="spin" id="sp"></div>
+      <span id="gen-lbl">Generate Scripts →</span>
+    </button>
+  </div>
+
+  <div class="out" id="out">
+    <div class="empty-out">
+      <div class="empty-icon">✦</div>
+      <div class="empty-text">Describe the situation.<br>Three boundary scripts will appear here.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let pattern = null;
+let loading = false;
+
+const patternContext = {
+  keeper: "The user is a Peace Keeper — they tend to say yes to keep harmony, apologize before stating needs, and struggle to hold limits without feeling guilty. Their scripts must be warm but NOT apologetic. Short. No justification. No softening into permission-seeking.",
+  absorber: "The user is an Absorber — they feel the cost of situations after the moment has passed. Their scripts must be immediate and clear, without over-explaining. They tend to absorb silently, so the scripts need to be usable in the moment, not planned.",
+  explainer: "The user is an Explainer — they over-justify their limits, providing context and reasons as if the boundary needs to earn its validity. Their scripts must be shorter than what they would naturally write. No explanation. The limit is stated as self-evident.",
+  avoider: "The user is an Avoider — they manage around situations rather than naming them directly. Their scripts must be direct without being confrontational. Simple, matter-of-fact, low drama. State the thing. Move on."
+};
+
+function selPat(p, btn) {
+  pattern = p;
+  document.querySelectorAll('.pat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function generate() {
+  const sit = document.getElementById('situation').value.trim();
+  const rel = document.getElementById('reltype').value;
+  const mode = document.getElementById('mode').value;
+  if (!sit) { pulse('situation'); return; }
+  if (loading) return;
+
+  loading = true;
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  document.getElementById('sp').style.display = 'block';
+  document.getElementById('gen-lbl').textContent = 'Writing scripts…';
+  showLoading();
+
+  const patCtx = pattern ? patternContext[pattern] : "Write general-purpose boundary scripts that are direct, warm, and concise.";
+  const prompt = `You are a boundary language specialist helping someone communicate limits clearly and without over-explaining.
+
+USER CONTEXT:
+${patCtx}
+
+SITUATION: ${sit}
+RELATIONSHIP: ${rel}
+DELIVERY MODE: ${mode}
+
+Generate THREE boundary scripts and a brief usage note. Respond with ONLY valid JSON, no markdown, no explanation:
+
+{
+  "scripts": [
+    {
+      "type": "Direct — Fewest words",
+      "text": "The shortest possible version. 1-2 sentences maximum. No explanation. Just the clean line.",
+      "note": "Use this when you want to hold without discussion."
+    },
+    {
+      "type": "Warm — Relationship-aware",
+      "text": "Slightly warmer, acknowledges the relationship. Still under 3 sentences. No apology.",
+      "note": "Use this when the relationship matters and you want to hold without damage."
+    },
+    {
+      "type": "Firm — If pushed or repeated",
+      "text": "For when the first version didn't land or they're testing the limit. Calm, final, no negotiation.",
+      "note": "Use this when warmth has already been offered and the limit still needs to hold."
+    }
+  ],
+  "context": "One short paragraph: why these particular scripts fit this situation and this pattern. What the user needs to remember before they say any of these."
+}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:900,
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.find(b=>b.type==='text')?.text||'';
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    renderOutput(parsed);
+  } catch(e) {
+    renderError();
+  }
+
+  loading = false;
+  btn.disabled = false;
+  document.getElementById('sp').style.display = 'none';
+  document.getElementById('gen-lbl').textContent = 'Generate Scripts →';
+}
+
+function showLoading() {
+  document.getElementById('out').innerHTML = `
+    <div class="empty-out">
+      <div class="empty-icon" style="animation:spin 2s linear infinite;display:inline-block">◈</div>
+      <div class="empty-text" style="margin-top:14px">Writing your scripts…</div>
+    </div>`;
+}
+
+function renderError() {
+  document.getElementById('out').innerHTML = `
+    <div class="script-card" style="border-color:rgba(196,132,122,0.3)">
+      <div class="sc-text" style="color:var(--rose)">Something went wrong. Try again.</div>
+    </div>`;
+}
+
+function renderOutput(d) {
+  const typeColors = {'Direct — Fewest words':'#C4847A','Warm — Relationship-aware':'#9A8EC4','Firm — If pushed or repeated':'#7AAEC4'};
+  const out = document.getElementById('out');
+  out.innerHTML = '';
+
+  if (d.context) {
+    out.innerHTML += `<div class="context-card"><div class="ctx-label">◈ Before You Speak</div><div class="ctx-text">${d.context}</div></div>`;
+  }
+
+  d.scripts.forEach((s, i) => {
+    const color = Object.values(typeColors)[i] || 'var(--pink)';
+    out.innerHTML += `
+      <div class="script-card">
+        <div class="sc-header">
+          <div class="sc-type" style="color:${color}">◈ ${s.type}</div>
+          <button class="sc-copy" onclick="cp(this,'${escq(s.text)}')">Copy</button>
+        </div>
+        <div class="sc-text">"${s.text}"</div>
+        ${s.note?`<div class="sc-note">↳ ${s.note}</div>`:''}
+      </div>`;
+  });
+}
+
+function cp(btn, text) {
+  navigator.clipboard.writeText(text);
+  btn.textContent='✓'; btn.classList.add('done');
+  setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('done');},2000);
+}
+
+function escq(t){return t.replace(/'/g,"\\'")}
+function pulse(id){const e=document.getElementById(id);e.style.borderColor='rgba(196,132,122,0.6)';setTimeout(()=>e.style.borderColor='',1000);}
+</script>
+</body>
+</html>
