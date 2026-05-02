@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Audit — Zone 2 · Life Direction OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0E0C0F;
+    --surface: #161219;
+    --border: rgba(255,255,255,0.07);
+    --text: #E8E2DC;
+    --muted: #7A6E78;
+    --accent: #C9A96E;
+    --rose: #C4847A;
+    --sage: #7A9E8A;
+    --lavender: #9A8EC4;
+    --sky: #7AAEC4;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 80px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    max-width: 600px;
+  }
+  .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 40px;
+    width: 100%;
+    max-width: 1000px;
+    align-items: start;
+  }
+
+  /* WHEEL */
+  .wheel-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  canvas {
+    cursor: crosshair;
+    max-width: 100%;
+  }
+  .wheel-instruction {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  /* SLIDERS PANEL */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 24px;
+  }
+  .panel-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .area-row {
+    margin-bottom: 18px;
+  }
+  .area-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .area-name {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+  .area-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 400;
+    min-width: 24px;
+    text-align: right;
+    transition: color 0.2s;
+  }
+  .area-note {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: rgba(255,255,255,0.08);
+    outline: none;
+    cursor: pointer;
+    border-radius: 0;
+    position: relative;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    transition: transform 0.15s;
+    box-shadow: 0 0 8px rgba(201,169,110,0.4);
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; border: none;
+    border-radius: 50%; background: var(--accent); cursor: pointer;
+  }
+
+  /* TOTALS */
+  .totals {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .total-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .total-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--accent);
+  }
+
+  .signal-box {
+    background: rgba(201,169,110,0.06);
+    border: 1px solid rgba(201,169,110,0.15);
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .signal-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .signal-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--accent);
+    line-height: 1.4;
+  }
+
+  /* WEAK AREAS */
+  .weak-wrap {
+    margin-top: 16px;
+  }
+  .weak-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .weak-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: rgba(196,132,122,0.07);
+    border-left: 2px solid var(--rose);
+  }
+  .weak-area-name { font-size: 12px; }
+  .weak-area-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--rose);
+    margin-left: auto;
+  }
+
+  .btn-export {
+    margin-top: 20px;
+    width: 100%;
+    background: none;
+    border: 1px solid rgba(201,169,110,0.3);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-export:hover { background: rgba(201,169,110,0.08); border-color: var(--accent); }
+
+  @media (max-width: 780px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="label">Life Direction OS · Zone 2</div>
+  <h1>Life <em>Audit</em> Wheel</h1>
+  <p class="sub">Rate each area honestly — not aspirationally. The wheel shows you where your energy is actually going and where your life is leaking.</p>
+</div>
+
+<div class="main-grid">
+  <div class="wheel-wrap">
+    <canvas id="wheel" width="480" height="480"></canvas>
+    <div class="wheel-instruction">◈ Drag sliders to update · Click canvas segments to select</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">◈ Score Each Area — 1 to 10</div>
+    <div id="sliders"></div>
+
+    <div class="totals">
+      <div class="total-row">
+        <div class="total-label">Overall Score</div>
+        <div class="total-val" id="total-score">0</div>
+      </div>
+      <div class="signal-box">
+        <div class="signal-label">◈ Current Signal</div>
+        <div class="signal-text" id="signal-text">Adjust scores to read your signal.</div>
+      </div>
+      <div class="weak-wrap">
+        <div class="weak-label">↓ Priority Areas — Start Here</div>
+        <div id="weak-areas"></div>
+      </div>
+      <button class="btn-export" onclick="copyResults()">↗ Copy Results to Clipboard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const areas = [
+  { name: "Work / Purpose",      color: "#C9A96E", note: "Does your work feel alive or just functional?" },
+  { name: "Health & Body",       color: "#7A9E8A", note: "Energy levels, sleep, movement, how you physically feel." },
+  { name: "Finances",            color: "#C4847A", note: "Stability, direction, agency — not just the number." },
+  { name: "Relationships",       color: "#9A8EC4", note: "Connection quality, not quantity." },
+  { name: "Inner Life",          color: "#7AAEC4", note: "Clarity, emotional regulation, your inner signal." },
+  { name: "Environment",         color: "#C49A7A", note: "Your space, your location, your surroundings." },
+  { name: "Growth / Learning",   color: "#9AC47A", note: "Are you becoming someone new, or repeating the same year?" },
+  { name: "Rest & Recovery",     color: "#C47A9A", note: "Permission to not produce. Space to restore." },
+];
+
+const scores = areas.map(() => 5);
+let activeIdx = null;
+
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const cx = 240, cy = 240, maxR = 180, minR = 20;
+const total = areas.length;
+
+function draw() {
+  ctx.clearRect(0, 0, 480, 480);
+  const step = (Math.PI * 2) / total;
+
+  // Grid rings
+  for (let r = 2; r <= 10; r += 2) {
+    ctx.beginPath();
+    for (let i = 0; i < total; i++) {
+      const angle = i * step - Math.PI / 2;
+      const rad = minR + ((maxR - minR) * r / 10);
+      const x = cx + Math.cos(angle) * rad;
+      const y = cy + Math.sin(angle) * rad;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = r === 10 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axis lines
+  for (let i = 0; i < total; i++) {
+    const angle = i * step - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Filled area (gradient fill)
+  ctx.beginPath();
+  for (let i = 0; i < total; i++) {
+    const angle = i * step - Math.PI / 2;
+    const rad = minR + ((maxR - minR) * scores[i] / 10);
+    const x = cx + Math.cos(angle) * rad;
+    const y = cy + Math.sin(angle) * rad;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(201,169,110,0.08)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(201,169,110,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Segment fills + labels
+  for (let i = 0; i < total; i++) {
+    const angle = i * step - Math.PI / 2;
+    const nextAngle = (i + 1) * step - Math.PI / 2;
+    const rad = minR + ((maxR - minR) * scores[i] / 10);
+    const color = areas[i].color;
+    const isActive = i === activeIdx;
+
+    // Segment fill
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, rad, angle, nextAngle);
+    ctx.closePath();
+    ctx.fillStyle = isActive
+      ? color + '28'
+      : (scores[i] <= 3 ? 'rgba(196,132,122,0.12)' : color + '12');
+    ctx.fill();
+
+    // Dot on vertex
+    const dotX = cx + Math.cos(angle) * rad;
+    const dotY = cy + Math.sin(angle) * rad;
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, isActive ? 5 : 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = isActive ? color : color + 'CC';
+    ctx.fill();
+
+    // Label
+    const labelR = maxR + 28;
+    const labelX = cx + Math.cos(angle) * labelR;
+    const labelY = cy + Math.sin(angle) * labelR;
+    ctx.font = isActive ? '500 11px DM Sans' : '300 10.5px DM Sans';
+    ctx.fillStyle = isActive ? color : '#8A7E88';
+    ctx.textAlign = labelX > cx ? 'left' : labelX < cx - 5 ? 'right' : 'center';
+    ctx.textBaseline = labelY > cy ? 'top' : labelY < cy - 5 ? 'bottom' : 'middle';
+
+    const parts = areas[i].name.split(' / ');
+    if (parts.length > 1) {
+      ctx.fillText(parts[0], labelX, labelY);
+      ctx.fillText('/ ' + parts[1], labelX, labelY + 13);
+    } else {
+      ctx.fillText(areas[i].name, labelX, labelY);
+    }
+
+    // Score near dot
+    ctx.font = '300 9px DM Mono';
+    ctx.fillStyle = isActive ? color : color + '99';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const scoreR = rad - 18;
+    if (scoreR > minR) {
+      ctx.fillText(scores[i], cx + Math.cos(angle) * scoreR, cy + Math.sin(angle) * scoreR);
+    }
+  }
+
+  // Center
+  ctx.beginPath();
+  ctx.arc(cx, cy, minR - 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#161219';
+  ctx.fill();
+  ctx.font = '300 9px DM Mono';
+  ctx.fillStyle = '#5A4E58';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const avg = (scores.reduce((a,b) => a+b, 0) / total).toFixed(1);
+  ctx.fillText(avg, cx, cy);
+}
+
+function buildSliders() {
+  const wrap = document.getElementById('sliders');
+  areas.forEach((area, i) => {
+    const row = document.createElement('div');
+    row.className = 'area-row';
+    row.innerHTML = `
+      <div class="area-header">
+        <span class="area-name" style="color:${area.color}">${area.name}</span>
+        <span class="area-score" id="score-${i}" style="color:${area.color}">${scores[i]}</span>
+      </div>
+      <div class="area-note">${area.note}</div>
+      <input type="range" min="1" max="10" value="${scores[i]}" 
+        style="--thumb:${area.color}" id="slider-${i}"
+        oninput="updateScore(${i}, this.value)"
+        onmouseenter="setActive(${i})"
+        onmouseleave="clearActive()">
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function updateScore(i, val) {
+  scores[i] = parseInt(val);
+  document.getElementById(`score-${i}`).textContent = val;
+  draw();
+  updateTotals();
+}
+
+function setActive(i) {
+  activeIdx = i;
+  draw();
+}
+
+function clearActive() {
+  activeIdx = null;
+  draw();
+}
+
+function updateTotals() {
+  const avg = (scores.reduce((a,b) => a+b, 0) / scores.length);
+  const pct = Math.round(avg * 10);
+  document.getElementById('total-score').textContent = avg.toFixed(1) + '/10';
+
+  let signal, signalText;
+  if (avg >= 8) { signal = 'High alignment. The system is working.'; }
+  else if (avg >= 6) { signal = 'Functional — but something is being managed around. The low areas are more expensive than they appear.'; }
+  else if (avg >= 4) { signal = 'Imbalance is the signal. The drag is structural, not motivational.'; }
+  else { signal = 'Real depletion here. Clarity work is urgent — not aspirational.'; }
+  document.getElementById('signal-text').textContent = signal;
+
+  // Weak areas
+  const sorted = scores.map((s,i) => ({s,i})).sort((a,b) => a.s - b.s);
+  const weakWrap = document.getElementById('weak-areas');
+  weakWrap.innerHTML = '';
+  sorted.slice(0,3).forEach(({s,i}) => {
+    if (s <= 7) {
+      weakWrap.innerHTML += `
+        <div class="weak-area">
+          <span class="weak-area-name">${areas[i].name}</span>
+          <span class="weak-area-num">${s}/10</span>
+        </div>`;
+    }
+  });
+}
+
+// Canvas click
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = 480 / rect.width;
+  const scaleY = 480 / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX - cx;
+  const my = (e.clientY - rect.top) * scaleY - cy;
+  const angle = Math.atan2(my, mx) + Math.PI / 2;
+  const step = (Math.PI * 2) / total;
+  let idx = Math.round(angle / step) % total;
+  if (idx < 0) idx += total;
+  activeIdx = idx;
+  draw();
+  document.getElementById(`slider-${idx}`).focus();
+});
+
+function copyResults() {
+  const lines = ['LIFE AUDIT RESULTS\n'];
+  areas.forEach((a, i) => { lines.push(`${a.name}: ${scores[i]}/10`); });
+  const avg = (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
+  lines.push(`\nOverall: ${avg}/10`);
+  const sorted = scores.map((s,i)=>({s,i})).sort((a,b)=>a.s-b.s);
+  lines.push('\nPriority Areas:');
+  sorted.slice(0,3).forEach(({s,i}) => lines.push(`→ ${areas[i].name} (${s}/10)`));
+  navigator.clipboard.writeText(lines.join('\n'));
+  const btn = document.querySelector('.btn-export');
+  btn.textContent = '✓ Copied to clipboard';
+  setTimeout(() => btn.textContent = '↗ Copy Results to Clipboard', 2000);
+}
+
+buildSliders();
+draw();
+updateTotals();
+</script>
+</body>
+</html>

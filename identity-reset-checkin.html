@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Check-in · 30-Day Identity Reset</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0F0D10; --s1:#151218; --s2:#1A1620;
+    --border:rgba(255,255,255,0.07); --text:#E8E2DC; --muted:#6A6070;
+    --orange:#C9956E; --blue:#7AAEC4; --green:#7A9E8A; --yellow:#C4B87A;
+    --red:#C4847A; --purple:#9A8EC4; --gold:#C9A96E;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; min-height:100vh; padding:40px 20px 80px; }
+
+  .header { text-align:center; margin-bottom:40px; }
+  .label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(24px,5vw,38px); font-weight:300; margin-bottom:6px; }
+  h1 em { font-style:italic; color:var(--orange); }
+
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:860px; margin:0 auto; }
+
+  .card { background:var(--s1); border:1px solid var(--border); padding:24px; }
+  .card.full { grid-column:1/-1; }
+  .card-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+
+  /* DAY COUNTER */
+  .day-control { display:flex; align-items:center; justify-content:center; gap:24px; margin-bottom:20px; }
+  .day-btn { width:40px; height:40px; background:var(--s2); border:1px solid var(--border); color:var(--muted); font-size:18px; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; }
+  .day-btn:hover { border-color:var(--orange); color:var(--orange); }
+  .day-display { text-align:center; }
+  .day-num { font-family:'Cormorant Garamond',serif; font-size:72px; font-weight:300; line-height:1; color:var(--orange); }
+  .day-of { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.15em; color:var(--muted); }
+
+  /* PHASE */
+  .phase-bar { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; margin-bottom:12px; }
+  .phase-seg { padding:10px 8px; text-align:center; opacity:.35; transition:all .3s; cursor:default; }
+  .phase-seg.active { opacity:1; }
+  .phase-num { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.1em; margin-bottom:4px; }
+  .phase-name { font-size:11px; font-weight:400; }
+
+  /* IDENTITY STATE */
+  .state-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .state-btn {
+    padding:12px 8px; background:var(--s2); border:1px solid transparent; cursor:pointer;
+    text-align:center; transition:all .2s; font-family:'DM Sans',sans-serif; font-weight:300;
+  }
+  .state-btn .state-icon { font-size:18px; display:block; margin-bottom:4px; }
+  .state-btn .state-name { font-size:11px; }
+  .state-btn .state-desc { font-size:9px; color:var(--muted); margin-top:2px; font-family:'DM Mono',monospace; }
+  .state-btn:hover { background:rgba(255,255,255,0.04); }
+  .state-btn.selected { border-color: currentColor; background:rgba(255,255,255,0.05); }
+
+  /* NON-NEGOTIABLES */
+  .nn-list { display:flex; flex-direction:column; gap:8px; }
+  .nn-item { display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--s2); cursor:pointer; transition:all .2s; user-select:none; }
+  .nn-item:hover { background:rgba(255,255,255,0.04); }
+  .nn-check { width:20px; height:20px; border:1px solid rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .2s; font-size:10px; }
+  .nn-item.done .nn-check { background:var(--green); border-color:var(--green); color:white; }
+  .nn-text { font-size:12px; flex:1; transition:opacity .2s; }
+  .nn-item.done .nn-text { opacity:.5; text-decoration:line-through; }
+  .nn-count { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:300; color:var(--green); margin-top:12px; text-align:right; }
+
+  .add-nn { display:flex; gap:8px; margin-top:12px; }
+  .add-nn input { flex:1; background:var(--s2); border:1px solid var(--border); color:var(--text); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:300; padding:8px 12px; outline:none; }
+  .add-nn input::placeholder { color:var(--muted); }
+  .add-nn input:focus { border-color:rgba(201,169,110,0.3); }
+  .add-nn button { background:none; border:1px solid var(--border); color:var(--muted); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.1em; padding:8px 14px; cursor:pointer; transition:all .2s; }
+  .add-nn button:hover { border-color:var(--orange); color:var(--orange); }
+
+  /* RISK LEVEL */
+  .risk-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .risk-btn { padding:14px 8px; text-align:center; background:var(--s2); border:1px solid transparent; cursor:pointer; transition:all .2s; }
+  .risk-btn .risk-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px; }
+  .risk-btn .risk-desc { font-size:10px; color:var(--muted); }
+  .risk-btn:hover { background:rgba(255,255,255,0.04); }
+  .risk-btn.selected { background:rgba(255,255,255,0.05); }
+
+  /* TODAY'S SENTENCE */
+  .sentence-box { padding:18px; background:var(--s2); border-left:2px solid var(--orange); margin-top:16px; font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; line-height:1.5; }
+
+  /* RETURN SPEED */
+  .return-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .return-item { flex:1; padding:12px; text-align:center; background:var(--s2); border:1px solid transparent; cursor:pointer; transition:all .2s; }
+  .return-item .r-emoji { font-size:20px; display:block; margin-bottom:4px; }
+  .return-item .r-label { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; letter-spacing:.05em; }
+  .return-item:hover { background:rgba(255,255,255,0.04); }
+  .return-item.selected { border-color:var(--green); }
+
+  /* SUMMARY BAR */
+  .summary { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+  .sum-chip { flex:1; min-width:120px; padding:14px; text-align:center; background:var(--s2); }
+  .sum-val { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:300; color:var(--gold); }
+  .sum-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+  /* MOTIVATIONAL CLOSING */
+  .reset-sentence { padding:20px 24px; border:1px solid rgba(201,169,110,0.15); margin-top:16px; text-align:center; }
+  .rs-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .rs-text { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300; font-style:italic; color:var(--gold); line-height:1.4; }
+
+  @media(max-width:600px) { .grid { grid-template-columns:1fr; } .state-grid { grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="label">30-Day Identity Reset · Daily Check-in</div>
+  <h1>Day <em id="h-day">—</em> Dashboard</h1>
+</div>
+
+<div class="grid">
+
+  <!-- DAY + PHASE -->
+  <div class="card">
+    <div class="card-title">◈ Current Day</div>
+    <div class="day-control">
+      <button class="day-btn" onclick="changeDay(-1)">−</button>
+      <div class="day-display">
+        <div class="day-num" id="day-num">1</div>
+        <div class="day-of">/ 30</div>
+      </div>
+      <button class="day-btn" onclick="changeDay(1)">+</button>
+    </div>
+    <div class="phase-bar" id="phase-bar">
+      <div class="phase-seg" id="phase-0" style="background:rgba(196,132,122,0.12);border:1px solid rgba(196,132,122,0.2)">
+        <div class="phase-num" style="color:#C4847A">Days 1–10</div>
+        <div class="phase-name">Disrupt</div>
+      </div>
+      <div class="phase-seg" id="phase-1" style="background:rgba(122,174,196,0.08);border:1px solid rgba(122,174,196,0.15)">
+        <div class="phase-num" style="color:#7AAEC4">Days 11–20</div>
+        <div class="phase-name">Rebuild</div>
+      </div>
+      <div class="phase-seg" id="phase-2" style="background:rgba(122,158,138,0.08);border:1px solid rgba(122,158,138,0.15)">
+        <div class="phase-num" style="color:#7A9E8A">Days 21–30</div>
+        <div class="phase-name">Stabilize</div>
+      </div>
+    </div>
+    <div class="sentence-box" id="phase-sentence">Loading…</div>
+  </div>
+
+  <!-- IDENTITY STATE -->
+  <div class="card">
+    <div class="card-title">◈ Identity State — Today</div>
+    <div class="state-grid">
+      <button class="state-btn" data-state="focused" style="color:var(--blue)" onclick="selectState('focused', this)">
+        <span class="state-icon">🔵</span>
+        <div class="state-name" style="color:var(--blue)">Focused</div>
+        <div class="state-desc">Clear + on track</div>
+      </button>
+      <button class="state-btn" data-state="stable" style="color:var(--green)" onclick="selectState('stable', this)">
+        <span class="state-icon">🟢</span>
+        <div class="state-name" style="color:var(--green)">Stable</div>
+        <div class="state-desc">Holding the floor</div>
+      </button>
+      <button class="state-btn" data-state="returning" style="color:var(--yellow)" onclick="selectState('returning', this)">
+        <span class="state-icon">🟡</span>
+        <div class="state-name" style="color:var(--yellow)">Returning</div>
+        <div class="state-desc">Coming back</div>
+      </button>
+      <button class="state-btn" data-state="slipping" style="color:var(--orange)" onclick="selectState('slipping', this)">
+        <span class="state-icon">🟠</span>
+        <div class="state-name" style="color:var(--orange)">Slipping</div>
+        <div class="state-desc">Pattern activated</div>
+      </button>
+      <button class="state-btn" data-state="rebuilding" style="color:var(--purple)" onclick="selectState('rebuilding', this)">
+        <span class="state-icon">🟣</span>
+        <div class="state-name" style="color:var(--purple)">Rebuilding</div>
+        <div class="state-desc">After a slip</div>
+      </button>
+      <button class="state-btn" data-state="collapsed" style="color:var(--red)" onclick="selectState('collapsed', this)">
+        <span class="state-icon">🔴</span>
+        <div class="state-name" style="color:var(--red)">Dark Day</div>
+        <div class="state-desc">Hard. Log it.</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- NON-NEGOTIABLES -->
+  <div class="card">
+    <div class="card-title">◈ Non-Negotiables — Today</div>
+    <div class="nn-list" id="nn-list">
+      <div class="nn-item" onclick="toggleNN(this)">
+        <div class="nn-check">—</div>
+        <div class="nn-text">Add your first non-negotiable →</div>
+      </div>
+    </div>
+    <div class="nn-count" id="nn-count"></div>
+    <div class="add-nn">
+      <input id="nn-input" placeholder="New non-negotiable…" onkeydown="if(event.key==='Enter')addNN()">
+      <button onclick="addNN()">+ Add</button>
+    </div>
+  </div>
+
+  <!-- RISK + RETURN -->
+  <div class="card">
+    <div class="card-title">◈ Risk & Return Speed</div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);margin-bottom:10px;text-transform:uppercase">Today's Risk Level</div>
+    <div class="risk-row">
+      <button class="risk-btn" onclick="selectRisk('low',this)">
+        <div class="risk-label" style="color:var(--green)">Low</div>
+        <div class="risk-desc">Grounded</div>
+      </button>
+      <button class="risk-btn" onclick="selectRisk('medium',this)">
+        <div class="risk-label" style="color:var(--yellow)">Medium</div>
+        <div class="risk-desc">Watch for triggers</div>
+      </button>
+      <button class="risk-btn" onclick="selectRisk('high',this)">
+        <div class="risk-label" style="color:var(--red)">High</div>
+        <div class="risk-desc">Overstimulated</div>
+      </button>
+    </div>
+
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);margin:18px 0 10px;text-transform:uppercase">Slipped today? Return Speed</div>
+    <div class="return-row">
+      <div class="return-item" onclick="selectReturn('same',this)">
+        <span class="r-emoji">⚡</span>
+        <div class="r-label">Same hour</div>
+      </div>
+      <div class="return-item" onclick="selectReturn('today',this)">
+        <span class="r-emoji">✓</span>
+        <div class="r-label">Same day</div>
+      </div>
+      <div class="return-item" onclick="selectReturn('next',this)">
+        <span class="r-emoji">↺</span>
+        <div class="r-label">Next day</div>
+      </div>
+      <div class="return-item" onclick="selectReturn('none',this)">
+        <span class="r-emoji">·</span>
+        <div class="r-label">No slip</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY + CLOSING -->
+  <div class="card full">
+    <div class="card-title">◈ Today's Read</div>
+    <div class="summary">
+      <div class="sum-chip">
+        <div class="sum-val" id="sum-day">—</div>
+        <div class="sum-label">Current Day</div>
+      </div>
+      <div class="sum-chip">
+        <div class="sum-val" id="sum-phase">—</div>
+        <div class="sum-label">Phase</div>
+      </div>
+      <div class="sum-chip">
+        <div class="sum-val" id="sum-state">—</div>
+        <div class="sum-label">Identity State</div>
+      </div>
+      <div class="sum-chip">
+        <div class="sum-val" id="sum-nn">—</div>
+        <div class="sum-label">NNs Complete</div>
+      </div>
+      <div class="sum-chip">
+        <div class="sum-val" id="sum-risk">—</div>
+        <div class="sum-label">Risk Level</div>
+      </div>
+    </div>
+    <div class="reset-sentence">
+      <div class="rs-label">◈ Today's Reset Sentence</div>
+      <div class="rs-text" id="reset-sentence">I return before drift becomes identity.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let day = 1;
+let state = null;
+let risk = null;
+let returnSpeed = null;
+let nnItems = [];
+let initialized = false;
+
+const phaseSentences = {
+  1: "Days 1–10: Disrupt. You are breaking the machinery of the old self. It will resist. That's the system working.",
+  2: "Days 11–20: Rebuild. Install what the new self can actually live inside. Consistency now compounds.",
+  3: "Days 21–30: Stabilize. Test what holds. Prove the new self under real conditions, not ideal ones."
+};
+
+const resetSentences = [
+  "I return before drift becomes identity.",
+  "The return speed matters more than the slip itself.",
+  "I am not the version of me that never slips. I am the version that returns.",
+  "I do not abandon structure because of emotion.",
+  "Hard days count more, not less.",
+  "One action. Right now. That's all returning requires.",
+  "I am not performing consistency. I am building it."
+];
+
+function changeDay(d) {
+  day = Math.max(1, Math.min(30, day + d));
+  updateDay();
+}
+
+function updateDay() {
+  document.getElementById('day-num').textContent = day;
+  document.getElementById('h-day').textContent = day;
+  document.getElementById('sum-day').textContent = day;
+
+  const phase = day <= 10 ? 0 : day <= 20 ? 1 : 2;
+  document.querySelectorAll('.phase-seg').forEach((el, i) => {
+    el.classList.toggle('active', i === phase);
+  });
+  const phaseNames = ['Disrupt','Rebuild','Stabilize'];
+  document.getElementById('sum-phase').textContent = phaseNames[phase];
+  document.getElementById('phase-sentence').textContent = phaseSentences[phase+1];
+
+  // Rotate sentence
+  const idx = (day - 1) % resetSentences.length;
+  document.getElementById('reset-sentence').textContent = resetSentences[idx];
+}
+
+function selectState(s, btn) {
+  state = s;
+  document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const labels = {focused:'Focused',stable:'Stable',returning:'Returning',slipping:'Slipping',rebuilding:'Rebuilding',collapsed:'Dark Day'};
+  document.getElementById('sum-state').textContent = labels[s] || '—';
+}
+
+function selectRisk(r, btn) {
+  risk = r;
+  document.querySelectorAll('.risk-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const labels = {low:'Low',medium:'Medium',high:'High'};
+  document.getElementById('sum-risk').textContent = labels[r] || '—';
+}
+
+function selectReturn(r, btn) {
+  returnSpeed = r;
+  document.querySelectorAll('.return-item').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function addNN() {
+  const input = document.getElementById('nn-input');
+  const val = input.value.trim();
+  if (!val) return;
+  nnItems.push({text: val, done: false});
+  input.value = '';
+  renderNNs();
+}
+
+function toggleNN(el) {
+  const idx = el.dataset.idx;
+  if (idx === undefined) return;
+  nnItems[idx].done = !nnItems[idx].done;
+  renderNNs();
+}
+
+function renderNNs() {
+  const list = document.getElementById('nn-list');
+  if (!nnItems.length) {
+    list.innerHTML = '<div class="nn-item" style="opacity:.4"><div class="nn-check">—</div><div class="nn-text">No non-negotiables set yet</div></div>';
+    document.getElementById('nn-count').textContent = '';
+    document.getElementById('sum-nn').textContent = '—';
+    return;
+  }
+  list.innerHTML = nnItems.map((item, i) => `
+    <div class="nn-item${item.done?' done':''}" data-idx="${i}" onclick="toggleNN(this)">
+      <div class="nn-check">${item.done?'✓':'—'}</div>
+      <div class="nn-text">${item.text}</div>
+    </div>
+  `).join('');
+  const done = nnItems.filter(x=>x.done).length;
+  document.getElementById('nn-count').textContent = `${done} / ${nnItems.length} completed`;
+  document.getElementById('sum-nn').textContent = `${done}/${nnItems.length}`;
+}
+
+updateDay();
+renderNNs();
+</script>
+</body>
+</html>

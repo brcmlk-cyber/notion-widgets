@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>90-Day Arc · Reinvention System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0C0B10; --s1:#111016; --s2:#161520;
+    --border:rgba(255,255,255,0.07); --text:#E4DFF0; --muted:#5E5870;
+    --purple:#9A8EC4; --indigo:#7A7EC4; --violet:#C47AC4;
+    --red:#C4847A; --green:#7A9E8A; --gold:#C9A96E; --moon:#C4B8E8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; min-height:100vh; padding:40px 20px 80px; }
+
+  .header { text-align:center; margin-bottom:44px; }
+  .label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(26px,5vw,40px); font-weight:300; margin-bottom:6px; color:var(--moon); }
+  h1 em { font-style:italic; color:var(--purple); }
+  .sub { font-size:13px; color:var(--muted); max-width:500px; margin:0 auto; line-height:1.7; }
+
+  .outer { max-width:860px; margin:0 auto; }
+
+  /* ARC VISUAL */
+  .arc-section { margin-bottom:32px; }
+  .arc-header { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
+
+  .arc-track { position:relative; margin-bottom:20px; }
+  .arc-ruler {
+    display:flex; align-items:center; gap:0;
+    background:var(--s1); border:1px solid var(--border);
+    padding:0; overflow:hidden; height:64px;
+  }
+  .arc-cycle {
+    flex:1; height:100%; display:flex; flex-direction:column;
+    justify-content:center; align-items:center; position:relative;
+    cursor:pointer; transition:all .2s;
+    border-right:1px solid var(--border);
+    padding:8px 0;
+  }
+  .arc-cycle:last-child { border-right:none; }
+  .arc-cycle:hover { background:rgba(255,255,255,0.03); }
+  .arc-cycle.active-cycle { background:rgba(154,142,196,0.08); }
+  .cycle-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px; }
+  .cycle-name { font-size:12px; font-weight:400; }
+  .cycle-days { font-size:9px; color:var(--muted); margin-top:2px; font-family:'DM Mono',monospace; }
+
+  /* Day tick strip */
+  .day-strip { display:flex; gap:2px; flex-wrap:nowrap; overflow:hidden; margin-bottom:12px; }
+  .day-tick { flex:1; min-width:4px; height:24px; background:rgba(255,255,255,0.06); transition:all .2s; cursor:pointer; position:relative; }
+  .day-tick:hover { background:rgba(154,142,196,0.3); }
+  .day-tick.past { background:rgba(154,142,196,0.25); }
+  .day-tick.today-tick { background:var(--purple); }
+  .day-tick.proof { background:rgba(122,158,138,0.5); }
+  .day-tick.slip { background:rgba(196,132,122,0.4); }
+
+  .day-input-row { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  .day-input-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+  .day-slider { flex:1; min-width:120px; -webkit-appearance:none; appearance:none; height:2px; background:rgba(255,255,255,0.08); outline:none; cursor:pointer; }
+  .day-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--purple); cursor:pointer; box-shadow:0 0 8px rgba(154,142,196,0.5); }
+  .day-val { font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; color:var(--purple); min-width:48px; }
+
+  /* CYCLE CARDS */
+  .cycles-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:28px; }
+  .cycle-card { padding:20px 16px; border:1px solid var(--border); position:relative; overflow:hidden; }
+  .cycle-card.active-card { border-color:rgba(154,142,196,0.3); }
+  .cycle-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; opacity:.4; }
+  .cycle-card:nth-child(1)::before { background:linear-gradient(90deg,var(--red),transparent); }
+  .cycle-card:nth-child(2)::before { background:linear-gradient(90deg,var(--indigo),transparent); }
+  .cycle-card:nth-child(3)::before { background:linear-gradient(90deg,var(--green),transparent); }
+  .cc-num { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.15em; color:var(--muted); margin-bottom:8px; }
+  .cc-title { font-size:13px; font-weight:400; margin-bottom:8px; }
+  .cc-body { font-size:11px; color:var(--muted); line-height:1.6; }
+  .cc-active-badge { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:.15em; text-transform:uppercase; color:var(--purple); background:rgba(154,142,196,0.1); padding:3px 8px; display:inline-block; margin-top:10px; }
+
+  /* WEEKLY FOCUS */
+  .weekly { background:var(--s1); border:1px solid var(--border); padding:24px; margin-bottom:24px; }
+  .weekly-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
+  .week-display { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .week-field label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:6px; }
+  .week-field input, .week-field textarea {
+    width:100%; background:var(--s2); border:1px solid var(--border); color:var(--text);
+    font-family:'DM Sans',sans-serif; font-size:12px; font-weight:300; padding:10px 12px; outline:none; resize:none;
+  }
+  .week-field input:focus, .week-field textarea:focus { border-color:rgba(154,142,196,0.3); }
+  .week-field input::placeholder, .week-field textarea::placeholder { color:var(--muted); }
+
+  /* DRIFT RECOVERY */
+  .drift-section { background:rgba(196,132,122,0.04); border:1px solid rgba(196,132,122,0.15); padding:24px; }
+  .drift-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--red); margin-bottom:16px; }
+  .drift-steps { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .drift-step { display:flex; align-items:flex-start; gap:14px; padding:14px; background:rgba(0,0,0,0.2); border:1px solid transparent; cursor:pointer; transition:all .2s; user-select:none; }
+  .drift-step:hover { background:rgba(196,132,122,0.06); }
+  .drift-step.done { border-color:rgba(122,158,138,0.3); }
+  .drift-num { font-family:'DM Mono',monospace; font-size:11px; color:var(--red); width:20px; flex-shrink:0; padding-top:1px; }
+  .drift-step.done .drift-num { color:var(--green); }
+  .drift-text { font-size:12px; line-height:1.6; flex:1; }
+  .drift-step.done .drift-text { opacity:.5; }
+  .drift-check { width:18px; height:18px; border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; margin-top:1px; transition:all .2s; }
+  .drift-step.done .drift-check { background:var(--green); border-color:var(--green); color:white; }
+
+  .drift-quote { font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; color:var(--moon); opacity:.6; text-align:center; padding:16px; }
+
+  @media(max-width:600px) {
+    .cycles-grid { grid-template-columns:1fr; }
+    .week-display { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="label">90-Day Reinvention System · Arc Tracker</div>
+  <h1>Your <em>Reinvention</em> Arc</h1>
+  <p class="sub">Not a comeback. A reconstruction. Track your position, your phase work, and your recovery protocol in one view.</p>
+</div>
+
+<div class="outer">
+
+  <!-- DAY SELECTOR + STRIP -->
+  <div class="arc-section">
+    <div class="arc-header">◈ Reinvention Arc — Current Position</div>
+
+    <div class="day-input-row">
+      <div class="day-input-label">Day</div>
+      <input type="range" class="day-slider" min="1" max="90" value="1" id="day-slider" oninput="updateDay(this.value)">
+      <div class="day-val" id="day-val">1</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)">/ 90</div>
+    </div>
+
+    <div class="day-strip" id="day-strip"></div>
+
+    <div class="arc-ruler">
+      <div class="arc-cycle" id="cycle-0" onclick="jumpCycle(1)">
+        <div class="cycle-label" style="color:var(--red)">Cycle 1</div>
+        <div class="cycle-name">Disrupt</div>
+        <div class="cycle-days">Days 1–30</div>
+      </div>
+      <div class="arc-cycle" id="cycle-1" onclick="jumpCycle(31)">
+        <div class="cycle-label" style="color:var(--indigo)">Cycle 2</div>
+        <div class="cycle-name">Build</div>
+        <div class="cycle-days">Days 31–60</div>
+      </div>
+      <div class="arc-cycle" id="cycle-2" onclick="jumpCycle(61)">
+        <div class="cycle-label" style="color:var(--green)">Cycle 3</div>
+        <div class="cycle-name">Stabilize</div>
+        <div class="cycle-days">Days 61–90</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CYCLE CARDS -->
+  <div class="cycles-grid" id="cycle-cards">
+    <div class="cycle-card" id="card-0">
+      <div class="cc-num">◈ Cycle 1 · Days 1–30</div>
+      <div class="cc-title" style="color:var(--red)">Disrupt the Old Pattern</div>
+      <div class="cc-body">Name the old self clearly. Remove what keeps it alive. Reduce overstimulation, tighten standards, and stop confusing collapse with honesty.</div>
+    </div>
+    <div class="cycle-card" id="card-1">
+      <div class="cc-num">◈ Cycle 2 · Days 31–60</div>
+      <div class="cc-title" style="color:var(--indigo)">Build the New Structure</div>
+      <div class="cc-body">Install what the new self can actually live inside: cleaner standards, stronger architecture, steadier behavior under pressure.</div>
+    </div>
+    <div class="cycle-card" id="card-2">
+      <div class="cc-num">◈ Cycle 3 · Days 61–90</div>
+      <div class="cc-title" style="color:var(--green)">Embody and Stabilize</div>
+      <div class="cc-body">Test what holds. Remove what still leaks. Shift from effort into normalcy. Decide what continues beyond the 90 days.</div>
+    </div>
+  </div>
+
+  <!-- WEEKLY FOCUS -->
+  <div class="weekly">
+    <div class="weekly-title">◈ This Week's Focus</div>
+    <div class="week-display">
+      <div class="week-field">
+        <label>Identity Goal</label>
+        <input placeholder="Who am I proving this week?" id="w-goal">
+      </div>
+      <div class="week-field">
+        <label>Resistance Pattern to Watch</label>
+        <input placeholder="What might pull me back?" id="w-resist">
+      </div>
+      <div class="week-field">
+        <label>Proof of Change — This Week</label>
+        <input placeholder="What would prove the new self?" id="w-proof">
+      </div>
+      <div class="week-field">
+        <label>Current Standard</label>
+        <input placeholder="What I no longer allow from myself…" id="w-standard">
+      </div>
+    </div>
+  </div>
+
+  <!-- DRIFT RECOVERY -->
+  <div class="drift-section">
+    <div class="drift-title">↩ Drift Recovery Protocol</div>
+    <div class="drift-steps" id="drift-steps">
+      <div class="drift-step" onclick="toggleDrift(this)">
+        <div class="drift-num">01</div>
+        <div class="drift-text"><strong>Reopen your latest Weekly Review.</strong> Read it. Don't revise. Read what you actually wrote.</div>
+        <div class="drift-check">—</div>
+      </div>
+      <div class="drift-step" onclick="toggleDrift(this)">
+        <div class="drift-num">02</div>
+        <div class="drift-text"><strong>Return to minimum architecture only.</strong> Not everything. One non-negotiable. The most fundamental one.</div>
+        <div class="drift-check">—</div>
+      </div>
+      <div class="drift-step" onclick="toggleDrift(this)">
+        <div class="drift-num">03</div>
+        <div class="drift-text"><strong>Complete one clean proof action today.</strong> Pause instead of reacting · protect the first 20 min · reset one visible space.</div>
+        <div class="drift-check">—</div>
+      </div>
+      <div class="drift-step" onclick="toggleDrift(this)">
+        <div class="drift-num">04</div>
+        <div class="drift-text"><strong>Update the planner.</strong> Continue from where you are. You don't go back to Day 1. You continue.</div>
+        <div class="drift-check">—</div>
+      </div>
+      <div class="drift-step" onclick="toggleDrift(this)">
+        <div class="drift-num">05</div>
+        <div class="drift-text"><strong>Name the real trigger.</strong> Not the surface event. What feeling was underneath the drift?</div>
+        <div class="drift-check">—</div>
+      </div>
+    </div>
+    <div class="drift-quote">"The reinvention is not proven by never drifting. It is proven by how quickly the floor holds."</div>
+  </div>
+
+</div>
+
+<script>
+let currentDay = 1;
+
+function buildStrip() {
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  for (let d = 1; d <= 90; d++) {
+    const tick = document.createElement('div');
+    tick.className = 'day-tick';
+    if (d < currentDay) tick.classList.add('past');
+    if (d === currentDay) tick.classList.add('today-tick');
+    tick.title = `Day ${d}`;
+    tick.addEventListener('click', () => {
+      currentDay = d;
+      document.getElementById('day-slider').value = d;
+      updateDay(d);
+    });
+    strip.appendChild(tick);
+  }
+}
+
+function updateDay(d) {
+  currentDay = parseInt(d);
+  document.getElementById('day-val').textContent = currentDay;
+  buildStrip();
+
+  const cycle = currentDay <= 30 ? 0 : currentDay <= 60 ? 1 : 2;
+  ['cycle-0','cycle-1','cycle-2'].forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active-cycle', i === cycle);
+  });
+  ['card-0','card-1','card-2'].forEach((id, i) => {
+    const card = document.getElementById(id);
+    card.classList.toggle('active-card', i === cycle);
+    const badge = card.querySelector('.cc-active-badge');
+    if (badge) badge.remove();
+    if (i === cycle) {
+      const b = document.createElement('div');
+      b.className = 'cc-active-badge';
+      b.textContent = '← You are here';
+      card.appendChild(b);
+    }
+  });
+}
+
+function jumpCycle(d) {
+  currentDay = d;
+  document.getElementById('day-slider').value = d;
+  updateDay(d);
+}
+
+function toggleDrift(el) {
+  el.classList.toggle('done');
+  const check = el.querySelector('.drift-check');
+  check.textContent = el.classList.contains('done') ? '✓' : '—';
+  const num = el.querySelector('.drift-num');
+}
+
+buildStrip();
+updateDay(1);
+</script>
+</body>
+</html>

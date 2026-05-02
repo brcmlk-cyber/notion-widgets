@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What's Your Boundary Pattern? — Standards & Boundaries OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --blush: #F2E8E1;
+    --rose: #D4A5A5;
+    --dusty: #B8857A;
+    --deep: #6B3D3D;
+    --plum: #3D1F2D;
+    --charcoal: #1C1218;
+    --gold: #C9A96E;
+    --sage: #8A9E8A;
+    --ink: #2A1A22;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      radial-gradient(ellipse at 20% 10%, rgba(212,165,165,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(107,61,61,0.08) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 60px 32px 100px;
+  }
+
+  /* INTRO SCREEN */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .intro-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dusty);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .intro-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--rose), transparent);
+  }
+
+  .shield-glyph {
+    font-size: 48px;
+    margin-bottom: 24px;
+    opacity: 0.85;
+    display: block;
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.03); }
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--plum);
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--dusty);
+  }
+
+  .intro-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: #5A3A40;
+    max-width: 520px;
+    margin-bottom: 48px;
+  }
+
+  .intro-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--blush);
+    border-left: 2px solid var(--rose);
+    padding: 14px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--deep);
+    letter-spacing: 0.04em;
+    margin-bottom: 48px;
+    width: 100%;
+  }
+
+  .btn-primary {
+    background: var(--plum);
+    color: var(--cream);
+    border: none;
+    padding: 18px 48px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--deep);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  .btn-primary:hover::before { transform: translateX(0); }
+  .btn-primary span { position: relative; z-index: 1; }
+
+  /* PROGRESS BAR */
+  .progress-wrap {
+    margin-bottom: 52px;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dusty);
+  }
+  .progress-bar {
+    height: 1px;
+    background: rgba(212,165,165,0.3);
+    position: relative;
+  }
+  .progress-fill {
+    height: 1px;
+    background: linear-gradient(90deg, var(--rose), var(--gold));
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .progress-dot {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* QUESTION */
+  .question-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--rose);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .question-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--plum);
+    margin-bottom: 12px;
+  }
+
+  .question-context {
+    font-size: 13px;
+    font-weight: 300;
+    color: #7A5050;
+    margin-bottom: 40px;
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  /* OPTIONS */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 22px;
+    background: white;
+    border: 1px solid rgba(212,165,165,0.2);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .option::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--blush);
+    transition: width 0.25s ease;
+  }
+  .option:hover::before { width: 100%; }
+  .option:hover { border-color: var(--rose); }
+  .option.selected {
+    border-color: var(--dusty);
+    background: var(--blush);
+  }
+  .option.selected::before { width: 100%; }
+  .option.selected .opt-marker { background: var(--dusty); color: white; border-color: var(--dusty); }
+
+  .opt-marker {
+    position: relative;
+    z-index: 1;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(180,130,130,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--dusty);
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+    margin-top: 1px;
+  }
+
+  .opt-text {
+    position: relative;
+    z-index: 1;
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  /* NAV */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .btn-back {
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dusty);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+    padding: 0;
+  }
+  .btn-back:hover { color: var(--deep); }
+  .btn-back:disabled { opacity: 0.2; cursor: default; }
+
+  .btn-next {
+    background: none;
+    border: 1px solid var(--plum);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--plum);
+    cursor: pointer;
+    padding: 14px 32px;
+    transition: all 0.25s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .btn-next.visible { opacity: 1; pointer-events: all; }
+  .btn-next:hover { background: var(--plum); color: var(--cream); }
+
+  /* RESULT SCREEN */
+  .result-tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--cream);
+    background: var(--dusty);
+    padding: 6px 14px;
+    margin-bottom: 28px;
+  }
+
+  .result-type {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(38px, 7vw, 64px);
+    font-weight: 300;
+    line-height: 1.0;
+    color: var(--plum);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .result-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--dusty);
+    margin-bottom: 36px;
+  }
+
+  .result-divider {
+    width: 48px;
+    height: 1px;
+    background: var(--rose);
+    margin-bottom: 32px;
+  }
+
+  .result-body {
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.8;
+    color: #4A2A32;
+    margin-bottom: 40px;
+    max-width: 580px;
+  }
+
+  .result-pattern {
+    background: var(--blush);
+    border-left: 2px solid var(--dusty);
+    padding: 24px 28px;
+    margin-bottom: 32px;
+  }
+  .result-pattern-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dusty);
+    margin-bottom: 12px;
+  }
+  .result-pattern-text {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--deep);
+  }
+
+  .result-direction {
+    margin-bottom: 48px;
+  }
+  .result-direction-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dusty);
+    margin-bottom: 16px;
+  }
+
+  .direction-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .direction-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid rgba(212,165,165,0.25);
+  }
+  .direction-card .num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--rose);
+    width: 20px;
+    flex-shrink: 0;
+  }
+  .direction-card .section-name {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--plum);
+  }
+  .direction-card .section-desc {
+    font-size: 12px;
+    font-weight: 300;
+    color: #7A5050;
+    margin-top: 2px;
+  }
+
+  .result-cta-wrap {
+    padding: 32px;
+    background: var(--plum);
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .result-cta-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 12px;
+  }
+  .result-cta-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--cream);
+    margin-bottom: 24px;
+    line-height: 1.4;
+  }
+  .btn-cta {
+    background: var(--gold);
+    color: var(--plum);
+    border: none;
+    padding: 16px 40px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 400;
+  }
+  .btn-cta:hover { background: var(--cream); }
+
+  .btn-restart {
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dusty);
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
+    transition: color 0.2s;
+    padding: 8px;
+  }
+  .btn-restart:hover { color: var(--deep); }
+
+  /* Score bar */
+  .score-bars { margin-bottom: 40px; }
+  .score-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .score-bar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--deep);
+    width: 90px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+  .score-bar-track {
+    flex: 1;
+    height: 3px;
+    background: rgba(212,165,165,0.2);
+    position: relative;
+    overflow: visible;
+  }
+  .score-bar-fill {
+    height: 3px;
+    background: linear-gradient(90deg, var(--rose), var(--dusty));
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0;
+  }
+  .score-bar-fill.animate { }
+  .score-bar-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dusty);
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up {
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  /* Transition overlay */
+  .transition-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--plum);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .transition-overlay.active { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="transition-overlay" id="overlay"></div>
+
+<div class="container">
+
+  <!-- INTRO SCREEN -->
+  <div class="screen active" id="screen-intro">
+    <div class="intro-label">Standards & Boundaries OS — Entry Assessment</div>
+    <span class="shield-glyph">🛡</span>
+    <h1>What's your<br><em>boundary pattern?</em></h1>
+    <p class="intro-sub">Most people don't have a boundary problem. They have a pattern problem. In 7 questions, this assessment will name the pattern that's been quietly running your life — and show you exactly where to start inside the system.</p>
+    <div class="intro-note">
+      <span>◈</span>
+      <span>7 questions · 4 minutes · No right answers — only real ones</span>
+    </div>
+    <button class="btn-primary" onclick="startQuiz()"><span>Begin Assessment →</span></button>
+  </div>
+
+  <!-- QUESTION SCREEN -->
+  <div class="screen" id="screen-question">
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span id="q-label">Question 1 of 7</span>
+        <span id="q-pct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        <div class="progress-dot" id="progress-dot" style="left:0%"></div>
+      </div>
+    </div>
+
+    <div id="question-container" class="fade-up">
+      <div class="question-number" id="q-number">01</div>
+      <div class="question-text" id="q-text"></div>
+      <div class="question-context" id="q-context"></div>
+      <div class="options" id="q-options"></div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back" id="btn-back" onclick="prevQuestion()">← Back</button>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()"><span>Continue →</span></button>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="screen" id="screen-result">
+    <div class="intro-label">Your Assessment Result</div>
+    <div class="result-tag" id="r-tag">Pattern Identified</div>
+    <div class="result-type" id="r-type"></div>
+    <div class="result-subtitle" id="r-subtitle"></div>
+    <div class="result-divider"></div>
+    <div class="result-body" id="r-body"></div>
+
+    <div class="result-pattern">
+      <div class="result-pattern-label">◈ Your Core Pattern</div>
+      <div class="result-pattern-text" id="r-pattern"></div>
+    </div>
+
+    <div class="score-bars" id="score-bars"></div>
+
+    <div class="result-direction">
+      <div class="result-direction-label">↳ Where to begin inside the system</div>
+      <div class="direction-cards" id="r-directions"></div>
+    </div>
+
+    <div class="result-cta-wrap">
+      <div class="result-cta-label">◈ Standards & Boundaries OS</div>
+      <div class="result-cta-text">You now have a name for the pattern.<br>The system gives you the structure to change it.</div>
+      <button class="btn-cta" onclick="openSystem()">Open the System →</button>
+    </div>
+
+    <button class="btn-restart" onclick="restart()">↺ Retake assessment</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    text: "Someone makes a request you don't want to say yes to. What usually happens first?",
+    context: "Before the words come out — what moves in you?",
+    options: [
+      { text: "I find a reason why they need me to say yes, and talk myself into it.", type: "A" },
+      { text: "I say yes immediately, then feel the discomfort after they've left.", type: "B" },
+      { text: "I explain why I can't do it — sometimes more than necessary.", type: "C" },
+      { text: "I go quiet, agree vaguely, then find a way to not follow through.", type: "D" }
+    ]
+  },
+  {
+    text: "When someone crosses a line you've set — or thought you'd set — what's your internal story?",
+    context: "The one you tell yourself, not the one you say out loud.",
+    options: [
+      { text: "\"Maybe I wasn't clear enough. I should have explained it better.\"", type: "C" },
+      { text: "\"It's not that big a deal. They didn't mean it. I'll let it go.\"", type: "B" },
+      { text: "\"I knew this would happen. I don't even know why I expected anything different.\"", type: "D" },
+      { text: "\"I'm being too sensitive. If I mention it, things will get worse.\"", type: "A" }
+    ]
+  },
+  {
+    text: "How often do you feel drained by interactions you technically chose?",
+    context: "Plans you made, commitments you accepted, conversations you stayed in.",
+    options: [
+      { text: "Often — I say yes to things I know will cost me and do it anyway.", type: "B" },
+      { text: "Regularly — I explain and justify my way in, then resent it quietly.", type: "C" },
+      { text: "Almost always — I don't know how to say no without a very good reason.", type: "A" },
+      { text: "Sometimes — I avoid the situation but the tension stays anyway.", type: "D" }
+    ]
+  },
+  {
+    text: "When you try to set a boundary, what does it usually sound like?",
+    context: "The actual words you tend to use.",
+    options: [
+      { text: "An apology wrapped around a request: \"I'm sorry, I just can't this time...\"", type: "B" },
+      { text: "A long explanation: \"The reason I need this is because...\" followed by more reasons.", type: "C" },
+      { text: "A hesitation that turns into a conditional yes: \"Maybe... or I could...\"", type: "A" },
+      { text: "Silence, deflection, or a slow fade — I avoid the conversation entirely.", type: "D" }
+    ]
+  },
+  {
+    text: "Think of a situation you're currently tolerating. What stops you from changing it?",
+    context: "Be honest. The actual thing.",
+    options: [
+      { text: "I'm afraid of the reaction — conflict, rejection, or making them feel bad.", type: "A" },
+      { text: "I don't feel like I've earned the right to say no yet.", type: "B" },
+      { text: "I'm not sure the boundary is reasonable enough to justify stating it clearly.", type: "C" },
+      { text: "I've tried before and it didn't work, so I'm managing around it instead.", type: "D" }
+    ]
+  },
+  {
+    text: "Afterward — when something costs you more than it should have — what do you do?",
+    context: "In the private hours after.",
+    options: [
+      { text: "I analyze what I should have said and prepare better scripts for next time.", type: "C" },
+      { text: "I feel it deeply, then convince myself it was the right choice to keep the peace.", type: "A" },
+      { text: "I get resentful — at them, at myself, at the fact that it happened again.", type: "D" },
+      { text: "I absorb it without processing it and move into the next thing quickly.", type: "B" }
+    ]
+  },
+  {
+    text: "What does self-respect feel like to you, honestly?",
+    context: "Not what it should feel like — what it actually feels like right now.",
+    options: [
+      { text: "Something I understand theoretically but haven't fully given myself permission to practice.", type: "B" },
+      { text: "Something I want, but I'm not sure what it looks like without becoming cold or difficult.", type: "A" },
+      { text: "Something I have — but it's inconsistent. I hold it in some areas and collapse in others.", type: "C" },
+      { text: "Something I've almost given up on expecting to feel consistently.", type: "D" }
+    ]
+  }
+];
+
+const patterns = {
+  A: {
+    tag: "The Peace Keeper",
+    type: "The Peace Keeper",
+    subtitle: "Warmth without edges. Presence without protection.",
+    body: "You are not afraid of having standards. You are afraid of what holding them will cost you — the harmony, the approval, the relationship. So you've learned to accommodate first and process the cost quietly, alone. Your nervous system has been running a calculation in the background for a long time: Is it worth it? And the answer is almost always no — not because the boundary isn't real, but because peace feels safer than friction.\n\nThe problem is, you're not actually at peace. You're managing. And there's a significant difference.",
+    pattern: "You protect the relationship at the expense of yourself. Your boundary language tends to be apologetic, conditional, or invisible. You know what you need, but you edit it before it can be heard — or before you have to witness someone's reaction to it.",
+    directions: [
+      { section: "Identity to Protect", desc: "Start here. Name who you're actually building this for." },
+      { section: "Boundary Scripts", desc: "Language that holds without softening into apology." },
+      { section: "Self-Respect Log", desc: "Track where you stayed with yourself — and where you didn't." }
+    ]
+  },
+  B: {
+    tag: "The Absorber",
+    type: "The Absorber",
+    subtitle: "You keep saying yes. You keep paying the price.",
+    body: "You have a strong sense of what others need and an underdeveloped sense of what it costs you to keep giving it. You say yes from a genuine place — care, generosity, a belief that your needs can wait — but the pattern compounds. You absorb more than you should, and then absorb the discomfort of having done so.\n\nSelf-respect, for you, is not a dramatic declaration. It's a smaller, more private shift: learning that what depletes you is not neutral. That it doesn't have to be labeled dramatic to count as real.",
+    pattern: "You absorb first, feel it later. Your boundaries aren't invisible — they're delayed. You often recognize the cost after the moment has passed, which means the learning rarely lands in time to change the next moment.",
+    directions: [
+      { section: "Self-Respect Dashboard", desc: "See what's actually happening — not what sounds composed." },
+      { section: "Standards Vault", desc: "Define what you're protecting before you're asked to give it." },
+      { section: "Boundaries Tracker", desc: "Log real moments. Make the pattern visible." }
+    ]
+  },
+  C: {
+    tag: "The Explainer",
+    type: "The Explainer",
+    subtitle: "You have standards. You just need permission to use them.",
+    body: "You think in systems and reasons. When a boundary needs to be held, you prepare your case — the context, the logic, the justification. You believe that if you explain it clearly enough, thoroughly enough, the other person will understand. And sometimes they do. But the explanation costs you something: it signals that the boundary isn't self-evident. That it needs defending.\n\nYour standards are real. The issue is you're not yet operating as if they require no justification. A limit does not become more valid when it's explained. It becomes more valid when it's held.",
+    pattern: "You over-explain to earn the right to the boundary you already have. Your clarity is high — your authority over your own standards is still being negotiated internally. The work is not more articulation. It's less.",
+    directions: [
+      { section: "Standards Vault", desc: "Write them clearly enough that you stop renegotiating them." },
+      { section: "Boundary Scripts", desc: "Fewer words. More shape. Practice the shorter version." },
+      { section: "Red Flag Library", desc: "Name the patterns you keep excusing into complexity." }
+    ]
+  },
+  D: {
+    tag: "The Avoider",
+    type: "The Avoider",
+    subtitle: "You withdrew from the battle. The cost followed you anyway.",
+    body: "You've tried before. It didn't go the way you wanted. So you've learned to manage around — to go quiet, fade out, tolerate at a distance rather than confront directly. It looks like accommodation. It feels like exhaustion. And underneath it, there's often a deep skepticism: that naming something clearly will change anything, or that you'll be heard.\n\nThis is not apathy. This is a form of self-protection that worked once and became a default. The system you're entering now is not asking you to become confrontational. It's asking you to become clearer — with yourself first.",
+    pattern: "You avoid the direct conversation and manage the tension instead. The boundary never gets stated, so it never gets upheld or renegotiated. The pattern repeats not because you don't see it — but because you've stopped believing that naming it will help.",
+    directions: [
+      { section: "Red Flag Library", desc: "What stays unnamed usually stays repeated. Start naming." },
+      { section: "Self-Respect Log", desc: "Track the small returns. Return speed matters more than drama." },
+      { section: "Weekly Recalibration", desc: "What are you still admitting by habit, not by choice?" }
+    ]
+  }
+};
+
+let current = 0;
+let answers = [];
+let scores = { A: 0, B: 0, C: 0, D: 0 };
+
+function startQuiz() {
+  transition(() => {
+    showScreen('screen-question');
+    renderQuestion();
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function transition(cb) {
+  const ov = document.getElementById('overlay');
+  ov.classList.add('active');
+  setTimeout(() => {
+    cb();
+    setTimeout(() => ov.classList.remove('active'), 100);
+  }, 300);
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  const pct = Math.round((current / questions.length) * 100);
+
+  document.getElementById('q-label').textContent = `Question ${current + 1} of ${questions.length}`;
+  document.getElementById('q-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-dot').style.left = pct + '%';
+  document.getElementById('q-number').textContent = String(current + 1).padStart(2, '0');
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-context').textContent = q.context;
+
+  const container = document.getElementById('question-container');
+  container.classList.remove('fade-up');
+  void container.offsetWidth;
+  container.classList.add('fade-up');
+
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  const shuffled = [...q.options].sort(() => 0.5 - Math.random());
+
+  shuffled.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    if (answers[current] && answers[current].optIndex === i) {
+      div.classList.add('selected');
+    }
+    div.innerHTML = `<div class="opt-marker">${letters[i]}</div><div class="opt-text">${opt.text}</div>`;
+    div.addEventListener('click', () => selectOption(i, opt.type, shuffled));
+    opts.appendChild(div);
+  });
+
+  const btnNext = document.getElementById('btn-next');
+  btnNext.classList.toggle('visible', !!answers[current]);
+  document.getElementById('btn-back').disabled = current === 0;
+}
+
+function selectOption(idx, type, shuffled) {
+  answers[current] = { optIndex: idx, type };
+  document.querySelectorAll('.option').forEach((el, i) => {
+    el.classList.toggle('selected', i === idx);
+    const marker = el.querySelector('.opt-marker');
+    const letters = ['A', 'B', 'C', 'D'];
+    marker.textContent = i === idx ? '✦' : letters[i];
+  });
+  document.getElementById('btn-next').classList.add('visible');
+}
+
+function nextQuestion() {
+  if (!answers[current]) return;
+  if (current < questions.length - 1) {
+    current++;
+    transition(renderQuestion);
+  } else {
+    showResults();
+  }
+}
+
+function prevQuestion() {
+  if (current > 0) {
+    current--;
+    transition(renderQuestion);
+  }
+}
+
+function showResults() {
+  // Tally scores
+  scores = { A: 0, B: 0, C: 0, D: 0 };
+  answers.forEach(a => { if (a) scores[a.type]++; });
+
+  const dominant = Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+  const p = patterns[dominant];
+  const max = questions.length;
+
+  transition(() => {
+    showScreen('screen-result');
+
+    document.getElementById('r-tag').textContent = 'Pattern Identified — ' + p.tag;
+    document.getElementById('r-type').textContent = p.type;
+    document.getElementById('r-subtitle').textContent = p.subtitle;
+    document.getElementById('r-body').textContent = p.body;
+    document.getElementById('r-pattern').textContent = p.pattern;
+
+    // Direction cards
+    const dc = document.getElementById('r-directions');
+    dc.innerHTML = '';
+    p.directions.forEach((d, i) => {
+      dc.innerHTML += `
+        <div class="direction-card">
+          <div class="num">0${i+1}</div>
+          <div>
+            <div class="section-name">${d.section}</div>
+            <div class="section-desc">${d.desc}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    // Score bars
+    const typeNames = { A: 'Keeper', B: 'Absorber', C: 'Explainer', D: 'Avoider' };
+    const sb = document.getElementById('score-bars');
+    sb.innerHTML = '<div class="result-pattern-label" style="margin-bottom:16px">◈ Score Breakdown</div>';
+    Object.entries(scores).sort((a,b) => b[1]-a[1]).forEach(([type, val]) => {
+      const pct = Math.round((val / max) * 100);
+      sb.innerHTML += `
+        <div class="score-bar-row">
+          <div class="score-bar-label">${typeNames[type]}</div>
+          <div class="score-bar-track">
+            <div class="score-bar-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="score-bar-val">${pct}%</div>
+        </div>
+      `;
+    });
+  });
+}
+
+function openSystem() {
+  alert("Open your Standards & Boundaries OS to begin.\n\nStart with: " + patterns[getDominant()].directions[0].section);
+}
+
+function getDominant() {
+  return Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function restart() {
+  current = 0;
+  answers = [];
+  scores = { A: 0, B: 0, C: 0, D: 0 };
+  transition(() => showScreen('screen-intro'));
+}
+</script>
+</body>
+</html>
