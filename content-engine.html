@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Intelligence Engine · Entrepreneur's Mentor OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#090B0A; --s1:#0F1210; --s2:#141A14;
+    --border:rgba(180,220,160,0.08); --text:#E4EDE0; --muted:#5A6E55;
+    --gold:#C9A96E; --green:#7A9E6A; --sage:#9EC47A; --emerald:#6EC49A;
+    --red:#C4847A; --purple:#9A8EC4;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; min-height:100vh; padding:40px 20px 80px; }
+  body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 20% 0%, rgba(122,158,106,0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(201,169,110,0.04) 0%, transparent 50%); pointer-events:none; }
+
+  .header { text-align:center; margin-bottom:40px; }
+  .label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.25em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(24px,4.5vw,40px); font-weight:300; margin-bottom:8px; color:var(--text); }
+  h1 em { font-style:italic; color:var(--gold); }
+  .sub { font-size:13px; color:var(--muted); max-width:520px; margin:0 auto; line-height:1.7; }
+
+  .engine { max-width:880px; margin:0 auto; display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start; }
+
+  /* INPUT PANEL */
+  .input-panel { background:var(--s1); border:1px solid var(--border); padding:28px; }
+  .panel-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:24px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+
+  .field { margin-bottom:20px; }
+  .field label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:8px; }
+  .field input, .field textarea, .field select {
+    width:100%; background:var(--s2); border:1px solid var(--border);
+    color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:300;
+    padding:10px 14px; outline:none; resize:none; transition:border-color .2s;
+    -webkit-appearance:none; appearance:none;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color:rgba(122,158,106,0.4); }
+  .field input::placeholder, .field textarea::placeholder { color:var(--muted); }
+  .field select option { background:#141A14; }
+
+  .tone-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .tone-btn { padding:8px 10px; background:var(--s2); border:1px solid transparent; cursor:pointer; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); transition:all .2s; text-align:center; }
+  .tone-btn:hover { border-color:rgba(122,158,106,0.3); color:var(--text); }
+  .tone-btn.active { border-color:var(--green); color:var(--green); background:rgba(122,158,106,0.06); }
+
+  .btn-generate {
+    width:100%; background:var(--green); color:var(--bg); border:none;
+    font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    padding:16px; cursor:pointer; transition:all .25s; margin-top:8px; font-weight:400;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .btn-generate:hover { background:var(--sage); }
+  .btn-generate:disabled { opacity:.4; cursor:not-allowed; }
+  .spin { display:none; width:14px; height:14px; border:2px solid rgba(0,0,0,0.3); border-top-color:var(--bg); border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* OUTPUT PANEL */
+  .output-panel { display:flex; flex-direction:column; gap:14px; }
+
+  .output-section { background:var(--s1); border:1px solid var(--border); padding:24px; }
+  .out-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .out-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; }
+  .out-copy { background:none; border:1px solid var(--border); color:var(--muted); font-family:'DM Mono',monospace; font-size:8px; letter-spacing:.12em; text-transform:uppercase; padding:5px 10px; cursor:pointer; transition:all .2s; }
+  .out-copy:hover { border-color:var(--green); color:var(--green); }
+  .out-copy.copied { border-color:var(--emerald); color:var(--emerald); }
+
+  .output-content { font-size:13px; line-height:1.75; color:rgba(228,237,224,0.85); min-height:60px; }
+  .output-content.empty { color:var(--muted); font-style:italic; font-size:12px; }
+
+  .hook-item { padding:14px 16px; background:var(--s2); border-left:2px solid var(--gold); margin-bottom:10px; font-size:13px; line-height:1.6; cursor:pointer; transition:all .2s; }
+  .hook-item:hover { border-left-color:var(--sage); }
+  .hook-item:last-child { margin-bottom:0; }
+  .hook-item .hook-num { font-family:'DM Mono',monospace; font-size:9px; color:var(--gold); margin-bottom:6px; letter-spacing:.1em; }
+
+  .carousel-angle { padding:14px 16px; background:var(--s2); border-left:2px solid var(--emerald); margin-bottom:10px; }
+  .carousel-angle:last-child { margin-bottom:0; }
+  .ca-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:.15em; color:var(--emerald); margin-bottom:6px; text-transform:uppercase; }
+  .ca-text { font-size:13px; line-height:1.6; }
+
+  /* EMPTY STATE */
+  .empty-state { background:var(--s1); border:1px solid var(--border); padding:48px 32px; text-align:center; }
+  .empty-icon { font-size:36px; margin-bottom:16px; opacity:.5; }
+  .empty-text { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300; font-style:italic; color:var(--muted); line-height:1.5; }
+
+  /* HISTORY */
+  .history-section { margin-top:6px; }
+  .history-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  .history-item { padding:10px 14px; background:var(--s2); border:1px solid var(--border); margin-bottom:6px; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:10px; }
+  .history-item:hover { border-color:rgba(122,158,106,0.3); }
+  .history-topic { font-size:12px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .history-time { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); flex-shrink:0; }
+
+  @media(max-width:720px) { .engine{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="label">Entrepreneur's Mentor OS · Social Media Studio</div>
+  <h1>Content <em>Intelligence</em> Engine</h1>
+  <p class="sub">Turn an insight into a full content package. Enter your niche, a raw idea, and your platform. Claude generates ready-to-use hooks, carousel concepts, and story angles — in seconds.</p>
+</div>
+
+<div class="engine">
+
+  <!-- INPUT -->
+  <div class="input-panel">
+    <div class="panel-title">◈ Content Inputs</div>
+
+    <div class="field">
+      <label>Your Niche / Business</label>
+      <input id="niche" placeholder="e.g. Productivity for founders, Mindset coaching, SaaS growth…">
+    </div>
+
+    <div class="field">
+      <label>Raw Insight or Topic</label>
+      <textarea id="topic" rows="4" placeholder="Write the raw insight, lesson, observation, or idea. Don't polish it — that's Claude's job."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Platform</label>
+      <select id="platform">
+        <option value="Instagram">Instagram</option>
+        <option value="LinkedIn">LinkedIn</option>
+        <option value="X / Twitter">X / Twitter</option>
+        <option value="TikTok">TikTok</option>
+        <option value="Newsletter">Newsletter</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Tone</label>
+      <div class="tone-grid" id="tone-grid">
+        <button class="tone-btn active" onclick="selectTone(this,'direct')">Direct</button>
+        <button class="tone-btn" onclick="selectTone(this,'warm')">Warm</button>
+        <button class="tone-btn" onclick="selectTone(this,'provocative')">Provocative</button>
+        <button class="tone-btn" onclick="selectTone(this,'editorial')">Editorial</button>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="gen-btn" onclick="generate()">
+      <div class="spin" id="spinner"></div>
+      <span id="gen-label">Generate Content Package →</span>
+    </button>
+
+    <div class="history-section" id="history-section" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+      <div class="history-label">◈ Recent Generations</div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-panel" id="output-panel">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">✦</div>
+      <div class="empty-text">Enter your insight and niche.<br>Your content package will appear here.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let tone = 'direct';
+let history = [];
+let isLoading = false;
+
+function selectTone(btn, t) {
+  tone = t;
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function generate() {
+  const niche = document.getElementById('niche').value.trim();
+  const topic = document.getElementById('topic').value.trim();
+  const platform = document.getElementById('platform').value;
+
+  if (!niche || !topic) {
+    pulse('niche'); pulse('topic'); return;
+  }
+  if (isLoading) return;
+
+  isLoading = true;
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('gen-label').textContent = 'Generating…';
+
+  showLoading();
+
+  const prompt = `You are a strategic content advisor for entrepreneurs and founders. Your job is to transform a raw insight into a complete, platform-optimized content package.
+
+NICHE: ${niche}
+RAW INSIGHT: ${topic}
+PLATFORM: ${platform}
+TONE: ${tone}
+
+Generate a content package with EXACTLY this JSON structure (respond with JSON only, no markdown, no explanation):
+
+{
+  "hooks": [
+    { "num": "Hook 01", "text": "Opening line that stops the scroll. Bold, specific, counterintuitive or emotionally direct. Max 2 sentences." },
+    { "num": "Hook 02", "text": "Different angle on the same insight. Could be a question, a bold claim, or a story opener." },
+    { "num": "Hook 03", "text": "Pattern-interrupt version. Challenges an assumption the audience holds." }
+  ],
+  "carousels": [
+    { "label": "Carousel Concept A", "text": "Slide-by-slide breakdown concept. Name the arc: what slide 1 promises, what slides 2-5 deliver, what the final slide does." },
+    { "label": "Carousel Concept B", "text": "Alternative framing. A different structural approach to the same insight." }
+  ],
+  "story": "A short-form story or caption for ${platform} Stories / short posts. Conversational, first-person, specific moment or observation. 3-5 sentences.",
+  "cta": "One strong call-to-action line that fits this insight and moves the audience toward a next step.",
+  "content_dna": "One sentence naming the underlying content theme or authority territory this insight belongs to."
+}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content?.find(b => b.type === 'text')?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    renderOutput(parsed, niche, topic, platform);
+
+    // Save to history
+    history.unshift({ niche, topic: topic.slice(0,60)+(topic.length>60?'…':''), platform, ts: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), parsed });
+    if (history.length > 5) history.pop();
+    renderHistory();
+
+  } catch(e) {
+    showError(e.message);
+  }
+
+  isLoading = false;
+  btn.disabled = false;
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('gen-label').textContent = 'Generate Content Package →';
+}
+
+function showLoading() {
+  const panel = document.getElementById('output-panel');
+  panel.innerHTML = `
+    <div class="output-section">
+      <div class="out-header"><div class="out-title" style="color:var(--green)">◈ Generating…</div></div>
+      <div class="output-content empty">Claude is building your content package. This takes about 10 seconds.</div>
+    </div>`;
+}
+
+function showError(msg) {
+  const panel = document.getElementById('output-panel');
+  panel.innerHTML = `
+    <div class="output-section" style="border-color:rgba(196,132,122,0.3)">
+      <div class="out-header"><div class="out-title" style="color:var(--red)">◈ Error</div></div>
+      <div class="output-content">${msg || 'Something went wrong. Try again.'}</div>
+    </div>`;
+}
+
+function renderOutput(d, niche, topic, platform) {
+  document.getElementById('empty-state')?.remove();
+  const panel = document.getElementById('output-panel');
+
+  panel.innerHTML = `
+    <!-- HOOKS -->
+    <div class="output-section">
+      <div class="out-header">
+        <div class="out-title" style="color:var(--gold)">◈ Hooks — Opening Lines</div>
+        <button class="out-copy" onclick="copySection('hooks-content','hook-copy');" id="hook-copy">Copy All</button>
+      </div>
+      <div id="hooks-content">
+        ${d.hooks.map(h => `
+          <div class="hook-item" onclick="copyText(this.querySelector('.hook-text').textContent)">
+            <div class="hook-num">${h.num}</div>
+            <div class="hook-text">${h.text}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- CAROUSELS -->
+    <div class="output-section">
+      <div class="out-header">
+        <div class="out-title" style="color:var(--emerald)">◈ Carousel Concepts</div>
+        <button class="out-copy" onclick="copySection('carousel-content','car-copy')" id="car-copy">Copy All</button>
+      </div>
+      <div id="carousel-content">
+        ${d.carousels.map(c => `
+          <div class="carousel-angle">
+            <div class="ca-label">${c.label}</div>
+            <div class="ca-text">${c.text}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- STORY + CTA -->
+    <div class="output-section">
+      <div class="out-header">
+        <div class="out-title" style="color:var(--sage)">◈ Story / Short Caption</div>
+        <button class="out-copy" onclick="copyText(document.getElementById('story-text').textContent)" id="story-copy">Copy</button>
+      </div>
+      <div class="output-content" id="story-text">${d.story}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="output-section">
+        <div class="out-header">
+          <div class="out-title" style="color:var(--purple)">◈ CTA Line</div>
+          <button class="out-copy" onclick="copyText(document.getElementById('cta-text').textContent)">Copy</button>
+        </div>
+        <div class="output-content" id="cta-text">${d.cta}</div>
+      </div>
+      <div class="output-section">
+        <div class="out-header">
+          <div class="out-title" style="color:var(--green)">◈ Content DNA</div>
+          <button class="out-copy" onclick="copyText(document.getElementById('dna-text').textContent)">Copy</button>
+        </div>
+        <div class="output-content" id="dna-text">${d.content_dna}</div>
+      </div>
+    </div>`;
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text.trim());
+}
+
+function copySection(id, btnId) {
+  const el = document.getElementById(id);
+  const text = el ? el.innerText : '';
+  navigator.clipboard.writeText(text.trim());
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.textContent = '✓ Copied'; btn.classList.add('copied'); setTimeout(()=>{ btn.textContent='Copy All'; btn.classList.remove('copied'); }, 2000); }
+}
+
+function pulse(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'rgba(196,132,122,0.6)';
+  setTimeout(() => el.style.borderColor = '', 1000);
+}
+
+function renderHistory() {
+  if (!history.length) return;
+  document.getElementById('history-section').style.display = 'block';
+  const list = document.getElementById('history-list');
+  list.innerHTML = history.map((h,i) => `
+    <div class="history-item" onclick="restoreHistory(${i})">
+      <div class="history-topic">${h.platform} · ${h.topic}</div>
+      <div class="history-time">${h.ts}</div>
+    </div>`).join('');
+}
+
+function restoreHistory(i) {
+  const h = history[i];
+  document.getElementById('niche').value = h.niche;
+  document.getElementById('topic').value = h.topic;
+  document.getElementById('platform').value = h.platform;
+  renderOutput(h.parsed, h.niche, h.topic, h.platform);
+}
+</script>
+</body>
+</html>
