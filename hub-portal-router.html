@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Router · The Hub OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#09080E; --s1:#0F0D18; --s2:#141220;
+  --border:rgba(160,140,220,0.08); --text:#E8E2F8; --muted:#5A5470;
+  --purple:#9A8EC4; --indigo:#7A7EC4; --violet:#C47AC4;
+  --gold:#C9A96E; --rose:#C4847A; --green:#7A9E8A; --sky:#7AAEC4;
+  --moon:#D4CCEE;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;padding:36px 16px 60px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(154,142,196,0.08) 0%,transparent 60%);pointer-events:none;}
+
+.header{text-align:center;margin-bottom:36px;}
+.label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,4vw,36px);font-weight:300;margin-bottom:6px;color:var(--moon);}
+h1 em{font-style:italic;color:var(--purple);}
+.sub{font-size:12px;color:var(--muted);max-width:480px;margin:0 auto;line-height:1.7;}
+
+/* TIME + DATE */
+.time-bar{display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:28px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);}
+.time-now{font-size:20px;color:var(--moon);letter-spacing:.05em;}
+
+/* ENERGY SELECTOR */
+.energy-section{max-width:700px;margin:0 auto 28px;}
+.section-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;text-align:center;}
+.energy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.e-btn{padding:14px 8px;background:var(--s1);border:1px solid var(--border);cursor:pointer;text-align:center;transition:all .22s;position:relative;overflow:hidden;}
+.e-btn::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .22s;}
+.e-btn:hover{border-color:rgba(154,142,196,0.3);}
+.e-btn:hover::before{opacity:1;}
+.e-btn.active{border-color:var(--purple);}
+.e-btn.active::before{opacity:1;}
+.e-emoji{font-size:20px;display:block;margin-bottom:6px;}
+.e-name{font-size:11px;font-weight:400;margin-bottom:2px;}
+.e-desc{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;}
+
+/* PORTAL MAP */
+.portal-map{max-width:700px;margin:0 auto 24px;}
+.portals-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.portal{padding:16px 14px;background:var(--s1);border:1px solid var(--border);cursor:pointer;transition:all .25s;position:relative;}
+.portal.highlighted{border-color:var(--purple);background:rgba(154,142,196,0.06);}
+.portal.highlighted::after{content:'← Start here';position:absolute;top:8px;right:8px;font-family:'DM Mono',monospace;font-size:7px;letter-spacing:.1em;color:var(--purple);text-transform:uppercase;}
+.portal.dim{opacity:.3;}
+.p-icon{font-size:20px;margin-bottom:6px;display:block;}
+.p-name{font-size:12px;font-weight:400;margin-bottom:4px;}
+.p-desc{font-size:10px;color:var(--muted);line-height:1.4;}
+.p-action{font-size:10px;color:var(--purple);margin-top:8px;font-family:'DM Mono',monospace;display:none;}
+.portal.highlighted .p-action{display:block;}
+
+/* DISPATCH */
+.dispatch{max-width:700px;margin:0 auto 24px;background:var(--s1);border:1px solid rgba(154,142,196,0.2);padding:24px;display:none;}
+.dispatch.visible{display:block;}
+.dispatch-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--purple);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.dispatch-body{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:300;line-height:1.7;color:var(--moon);margin-bottom:16px;font-style:italic;}
+.dispatch-actions{display:flex;flex-direction:column;gap:8px;}
+.d-action{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--s2);cursor:pointer;transition:all .2s;user-select:none;}
+.d-action:hover{background:rgba(154,142,196,0.06);}
+.d-action.done .d-check{background:var(--green);border-color:var(--green);color:white;}
+.d-action.done .d-text{opacity:.4;text-decoration:line-through;}
+.d-check{width:18px;height:18px;border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;transition:all .2s;}
+.d-text{font-size:12px;line-height:1.5;flex:1;}
+.d-arrow{font-family:'DM Mono',monospace;font-size:9px;color:var(--purple);}
+
+/* QUICK CAPTURE */
+.qc-section{max-width:700px;margin:0 auto 24px;}
+.qc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.qc-btn{padding:12px 16px;background:var(--s1);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .2s;text-align:left;}
+.qc-btn:hover{border-color:rgba(154,142,196,0.3);background:rgba(154,142,196,0.03);}
+.qc-icon{font-size:16px;flex-shrink:0;}
+.qc-body{}
+.qc-name{font-size:11px;font-weight:400;margin-bottom:1px;}
+.qc-dest{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+
+/* TODAY INPUT */
+.today-section{max-width:700px;margin:0 auto;}
+.today-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.today-input{width:100%;background:var(--s1);border:1px solid var(--border);color:var(--text);font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;padding:14px 18px;outline:none;transition:border-color .2s;}
+.today-input:focus{border-color:rgba(154,142,196,0.4);}
+.today-input::placeholder{color:var(--muted);font-style:italic;}
+
+@media(max-width:560px){.energy-grid{grid-template-columns:repeat(2,1fr);}.portals-grid{grid-template-columns:repeat(2,1fr);}.qc-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="label">The Hub OS · Daily Portal Router</div>
+  <h1>Where does today <em>begin?</em></h1>
+  <p class="sub">Select your current energy. The system shows you which portal to open first — and what to do when you get there.</p>
+</div>
+
+<div class="time-bar">
+  <span id="date-str"></span>
+  <span class="time-now" id="time-str">--:--</span>
+  <span id="day-str"></span>
+</div>
+
+<!-- TODAY'S ONE THING -->
+<div class="today-section" style="margin-bottom:24px;">
+  <div class="today-label">◈ Today's One Thing</div>
+  <input class="today-input" id="one-thing" placeholder="The single most important thing today is…">
+</div>
+
+<!-- ENERGY -->
+<div class="energy-section">
+  <div class="section-label">◈ How does today feel so far?</div>
+  <div class="energy-grid" id="energy-grid">
+    <button class="e-btn" onclick="selectEnergy('clear',this)" style="--hover-bg:rgba(122,158,138,0.06)">
+      <span class="e-emoji">🌱</span><div class="e-name">Clear & Energized</div><div class="e-desc">Ready to build</div>
+    </button>
+    <button class="e-btn" onclick="selectEnergy('foggy',this)" style="--hover-bg:rgba(122,126,196,0.06)">
+      <span class="e-emoji">🌫</span><div class="e-name">Foggy or Scattered</div><div class="e-desc">Hard to focus</div>
+    </button>
+    <button class="e-btn" onclick="selectEnergy('creative',this)" style="--hover-bg:rgba(196,122,174,0.06)">
+      <span class="e-emoji">✨</span><div class="e-name">Creative & Expansive</div><div class="e-desc">Ideas are flowing</div>
+    </button>
+    <button class="e-btn" onclick="selectEnergy('overwhelmed',this)" style="--hover-bg:rgba(196,132,122,0.06)">
+      <span class="e-emoji">🌊</span><div class="e-name">Overwhelmed</div><div class="e-desc">Too much at once</div>
+    </button>
+    <button class="e-btn" onclick="selectEnergy('reflective',this)" style="--hover-bg:rgba(154,142,196,0.06)">
+      <span class="e-emoji">🔮</span><div class="e-name">Reflective & Inward</div><div class="e-desc">Processing, not doing</div>
+    </button>
+    <button class="e-btn" onclick="selectEnergy('low',this)" style="--hover-bg:rgba(201,169,110,0.06)">
+      <span class="e-emoji">🌙</span><div class="e-name">Low Energy</div><div class="e-desc">Need gentleness</div>
+    </button>
+  </div>
+</div>
+
+<!-- PORTAL MAP -->
+<div class="portal-map">
+  <div class="section-label">◈ Your Nine Portals</div>
+  <div class="portals-grid" id="portal-grid">
+    <div class="portal" data-id="cmd"><span class="p-icon">🌀</span><div class="p-name">Command Center</div><div class="p-desc">Daily work hub. Start every day from here.</div><div class="p-action">→ Open today's focus + weekly priorities</div></div>
+    <div class="portal" data-id="inner"><span class="p-icon">🌙</span><div class="p-name">Inner Access</div><div class="p-desc">Journal, Mind Map, Brain Dump, Body & Emotion.</div><div class="p-action">→ Open journal. One honest entry.</div></div>
+    <div class="portal" data-id="universes"><span class="p-icon">🌌</span><div class="p-name">Universes</div><div class="p-desc">Projects, brands, life areas, creative ecosystems.</div><div class="p-action">→ Pick the one universe that needs attention today.</div></div>
+    <div class="portal" data-id="build"><span class="p-icon">🔨</span><div class="p-name">Build</div><div class="p-desc">Content Pipeline, Products, Launches, Sprint.</div><div class="p-action">→ Open the Sprint. What ships today?</div></div>
+    <div class="portal" data-id="longevity"><span class="p-icon">💪</span><div class="p-name">Longevity</div><div class="p-desc">Body signals, movement, supplements, sleep.</div><div class="p-action">→ Log last night's sleep + today's energy signal.</div></div>
+    <div class="portal" data-id="finance"><span class="p-icon">💸</span><div class="p-name">Finance</div><div class="p-desc">Income, expenses, assets, investments, goals.</div><div class="p-action">→ Log any transaction from the past 48 hours.</div></div>
+    <div class="portal" data-id="know"><span class="p-icon">📚</span><div class="p-name">Know</div><div class="p-desc">Reading list, courses, frameworks, research.</div><div class="p-action">→ Add one note from what you've been consuming.</div></div>
+    <div class="portal" data-id="soulside"><span class="p-icon">🔮</span><div class="p-name">Soulside</div><div class="p-desc">Intuitive notes, rituals, values, intention space.</div><div class="p-action">→ Write what's asking for attention beneath the surface.</div></div>
+    <div class="portal" data-id="archive"><span class="p-icon">🗄️</span><div class="p-name">Archive & References</div><div class="p-desc">Pending ideas. Source materials. Still alive, resting.</div><div class="p-action">→ Is anything in here ready to be activated?</div></div>
+  </div>
+</div>
+
+<!-- DISPATCH -->
+<div class="dispatch" id="dispatch">
+  <div class="dispatch-title">◈ Today's Dispatch</div>
+  <div class="dispatch-body" id="dispatch-body"></div>
+  <div class="dispatch-actions" id="dispatch-actions"></div>
+</div>
+
+<!-- QUICK CAPTURE -->
+<div class="qc-section">
+  <div class="section-label">◈ Quick Capture — Something just came up</div>
+  <div class="qc-grid">
+    <div class="qc-btn"><span class="qc-icon">💡</span><div class="qc-body"><div class="qc-name">Thought or Idea</div><div class="qc-dest">→ Mind Map</div></div></div>
+    <div class="qc-btn"><span class="qc-icon">📓</span><div class="qc-body"><div class="qc-name">Journal Entry</div><div class="qc-dest">→ Inner Access</div></div></div>
+    <div class="qc-btn"><span class="qc-icon">🌊</span><div class="qc-body"><div class="qc-name">Brain Dump</div><div class="qc-dest">→ Inner Access</div></div></div>
+    <div class="qc-btn"><span class="qc-icon">🌱</span><div class="qc-body"><div class="qc-name">Content Seed</div><div class="qc-dest">→ Build / Content Pipeline</div></div></div>
+    <div class="qc-btn"><span class="qc-icon">💪</span><div class="qc-body"><div class="qc-name">Body / Energy Signal</div><div class="qc-dest">→ Longevity</div></div></div>
+    <div class="qc-btn"><span class="qc-icon">🌙</span><div class="qc-body"><div class="qc-name">Dream Fragment</div><div class="qc-dest">→ Inner Access</div></div></div>
+  </div>
+</div>
+
+<script>
+const energyMap = {
+  clear: {
+    portals: ['cmd','build','universes'],
+    body: "Today has traction. Don't waste it on planning — that's already done. Open the Command Center, confirm the one thing, and start building immediately. Execution is the portal.",
+    actions: [
+      {text:"Update today's focus in Command Center",arrow:"→ Command Center"},
+      {text:"Open the Sprint board — what ships today?",arrow:"→ Build"},
+      {text:"Block the first 90 minutes for deep work",arrow:"→ No interruptions"},
+    ]
+  },
+  foggy: {
+    portals: ['cmd','inner','longevity'],
+    body: "Fog usually means something is unprocessed, not that you're lazy. Before forcing productivity, spend 10 minutes in Inner Access. Name what's actually happening. Then return to Command Center and choose the smallest possible first action.",
+    actions: [
+      {text:"Open journal — write what's actually on your mind",arrow:"→ Inner Access"},
+      {text:"Check energy log — sleep, food, stimulation level",arrow:"→ Longevity"},
+      {text:"Choose only ONE task for this morning",arrow:"→ Command Center"},
+    ]
+  },
+  creative: {
+    portals: ['universes','build','know'],
+    body: "Creative energy is time-limited — use it now, structure it later. Go to Universes first and capture what's expanding in you. Then Build gives it shape. Don't let this session end without something tangible captured.",
+    actions: [
+      {text:"Open Universes — which one is calling loudest?",arrow:"→ Universes"},
+      {text:"Capture the idea before analyzing it",arrow:"→ Build / Content Pipeline"},
+      {text:"Add any reference or inspiration to Know",arrow:"→ Know"},
+    ]
+  },
+  overwhelmed: {
+    portals: ['inner','archive','cmd'],
+    body: "Overwhelm is usually a volume problem, not a capacity problem. You're holding too much at once. Start with a Brain Dump in Inner Access — get it all out of your head. Then return to Command Center and choose three things maximum for today.",
+    actions: [
+      {text:"Brain dump everything that's in your head",arrow:"→ Inner Access"},
+      {text:"Move anything non-urgent to Archive",arrow:"→ Archive"},
+      {text:"Return to Command Center — choose only 3 things",arrow:"→ Command Center"},
+    ]
+  },
+  reflective: {
+    portals: ['inner','soulside','know'],
+    body: "Reflective days are not wasted days. They are integration days. Something is being processed that needs space, not force. Go to Inner Access and write. Then Soulside if something symbolic or deeper is surfacing. Know if it's intellectual.",
+    actions: [
+      {text:"Write in journal — no agenda, just honest",arrow:"→ Inner Access"},
+      {text:"Open Soulside if something deeper is surfacing",arrow:"→ Soulside"},
+      {text:"Make one note in Know from recent learning",arrow:"→ Know"},
+    ]
+  },
+  low: {
+    portals: ['longevity','inner','archive'],
+    body: "Low energy is information, not failure. Something in the Longevity system needs attention — sleep, movement, stimulation balance. Give yourself the minimum today: one entry, one small action, one honest log. That's enough.",
+    actions: [
+      {text:"Log sleep quality + today's energy signal",arrow:"→ Longevity"},
+      {text:"One honest journal sentence — what's depleted?",arrow:"→ Inner Access"},
+      {text:"No new commitments today — review only",arrow:"→ Archive"},
+    ]
+  }
+};
+
+let currentEnergy = null;
+
+function selectEnergy(type, btn) {
+  currentEnergy = type;
+  document.querySelectorAll('.e-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const map = energyMap[type];
+  document.querySelectorAll('.portal').forEach(p => {
+    const id = p.dataset.id;
+    p.classList.remove('highlighted','dim');
+    if (map.portals.includes(id)) p.classList.add('highlighted');
+    else p.classList.add('dim');
+  });
+
+  const dispatch = document.getElementById('dispatch');
+  dispatch.classList.add('visible');
+  document.getElementById('dispatch-body').textContent = map.body;
+
+  const actionsEl = document.getElementById('dispatch-actions');
+  actionsEl.innerHTML = map.actions.map(a => `
+    <div class="d-action" onclick="this.classList.toggle('done');this.querySelector('.d-check').textContent=this.classList.contains('done')?'✓':'—'">
+      <div class="d-check">—</div>
+      <div class="d-text">${a.text}</div>
+      <div class="d-arrow">${a.arrow}</div>
+    </div>`).join('');
+}
+
+function updateTime() {
+  const now = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('time-str').textContent = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('date-str').textContent = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  document.getElementById('day-str').textContent = days[now.getDay()];
+}
+updateTime(); setInterval(updateTime, 30000);
+</script>
+</body>
+</html>
