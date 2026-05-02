@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relationship Health Check · Relationship OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0F0A0F; --s1:#160D16; --s2:#1E1220;
+    --border:rgba(255,200,220,0.08); --text:#F0E4F0; --muted:#7A6078;
+    --pink:#C47AAE; --rose:#C4847A; --gold:#C9A96E; --lavender:#9A8EC4; --sage:#7A9E8A;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; min-height:100vh; padding:44px 20px 80px; }
+  body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 50% 0%, rgba(196,122,174,0.06) 0%, transparent 60%); pointer-events:none; }
+
+  .header { text-align:center; margin-bottom:44px; }
+  .label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.25em; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
+  h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(26px,5vw,42px); font-weight:300; margin-bottom:8px; }
+  h1 em { font-style:italic; color:var(--pink); }
+  .sub { font-size:13px; color:var(--muted); max-width:500px; margin:0 auto; line-height:1.7; }
+
+  .outer { max-width:880px; margin:0 auto; }
+
+  /* HEXAGON RADAR */
+  .viz-section { display:flex; flex-direction:column; align-items:center; margin-bottom:40px; }
+  canvas { max-width:100%; }
+  .viz-note { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; color:var(--muted); text-align:center; margin-top:12px; }
+
+  /* SLIDERS */
+  .areas-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:32px; }
+  .area-card { background:var(--s1); border:1px solid var(--border); padding:20px; }
+  .area-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+  .area-name { font-size:13px; font-weight:400; }
+  .area-score { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300; line-height:1; }
+  .area-desc { font-size:11px; color:var(--muted); margin-bottom:14px; line-height:1.5; font-style:italic; }
+  .area-slider { -webkit-appearance:none; appearance:none; width:100%; height:2px; background:rgba(255,255,255,0.07); outline:none; cursor:pointer; }
+  .area-slider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; cursor:pointer; transition:transform .15s; }
+  .area-slider::-webkit-slider-thumb:hover { transform:scale(1.3); }
+
+  /* STATUS */
+  .status-section { background:var(--s1); border:1px solid var(--border); padding:28px; margin-bottom:24px; }
+  .status-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+  .status-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px; }
+  .stat-box { text-align:center; padding:16px 8px; background:var(--s2); }
+  .stat-val { font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; margin-bottom:4px; }
+  .stat-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); }
+
+  .signal-box { border-left:2px solid var(--pink); padding:16px 20px; background:rgba(196,122,174,0.04); margin-bottom:20px; }
+  .signal-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .signal-text { font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; line-height:1.5; color:var(--pink); }
+
+  /* ATTENTION AREAS */
+  .attn-section { margin-bottom:24px; }
+  .attn-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  .attn-row { display:flex; align-items:center; gap:14px; padding:14px 18px; margin-bottom:10px; background:var(--s1); border:1px solid var(--border); }
+  .attn-rank { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); width:20px; flex-shrink:0; }
+  .attn-name { font-size:12px; font-weight:400; flex:1; }
+  .attn-score-wrap { display:flex; align-items:center; gap:10px; }
+  .attn-bar-track { width:60px; height:2px; background:rgba(255,255,255,0.07); }
+  .attn-bar-fill { height:2px; transition:width .6s ease; }
+  .attn-num { font-family:'DM Mono',monospace; font-size:10px; min-width:28px; text-align:right; }
+  .attn-where { font-size:10px; color:var(--muted); font-style:italic; flex:1.5; text-align:right; }
+
+  /* WEEKLY CHECK-IN */
+  .checkin { background:var(--s1); border:1px solid rgba(196,122,174,0.15); padding:24px; }
+  .checkin-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--pink); margin-bottom:16px; }
+  .checkin-qs { display:flex; flex-direction:column; gap:12px; }
+  .checkin-q { font-size:12px; color:var(--muted); padding:12px 16px; background:var(--s2); border-left:1px solid rgba(196,122,174,0.2); line-height:1.6; cursor:pointer; transition:all .2s; user-select:none; }
+  .checkin-q:hover { border-left-color:var(--pink); color:var(--text); }
+  .checkin-q.done { border-left-color:var(--sage); color:rgba(240,228,240,0.5); }
+  .checkin-q .cq-check { float:right; font-family:'DM Mono',monospace; font-size:10px; color:var(--sage); margin-left:12px; }
+
+  @media(max-width:600px) { .areas-grid{grid-template-columns:1fr;} .status-grid{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="label">Relationship OS · Health Check</div>
+  <h1>How is the <em>relationship</em> doing?</h1>
+  <p class="sub">Rate 6 areas of your relationship honestly. The radar shows you where you're thriving and where the real work is — and points you to the right section of the system.</p>
+</div>
+
+<div class="outer">
+  <div class="viz-section">
+    <canvas id="radar" width="480" height="480"></canvas>
+    <div class="viz-note">◈ Drag sliders to update · Each area maps to a section of the system</div>
+  </div>
+
+  <div class="areas-grid" id="areas-grid"></div>
+
+  <div class="status-section">
+    <div class="status-title">◈ Relationship Signal</div>
+    <div class="status-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="stat-avg" style="color:var(--pink)">—</div>
+        <div class="stat-label">Overall Score</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-strong" style="color:var(--sage)">—</div>
+        <div class="stat-label">Strongest Area</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-attn" style="color:var(--rose)">—</div>
+        <div class="stat-label">Needs Attention</div>
+      </div>
+    </div>
+    <div class="signal-box">
+      <div class="signal-label">◈ Current Signal</div>
+      <div class="signal-text" id="signal-text">Adjust scores to read the relationship's signal.</div>
+    </div>
+  </div>
+
+  <div class="attn-section">
+    <div class="attn-title">↓ Priority Areas — Start Here in the System</div>
+    <div id="attn-list"></div>
+  </div>
+
+  <div class="checkin">
+    <div class="checkin-title">◈ Weekly Check-in Questions — Tap to Mark Complete</div>
+    <div class="checkin-qs" id="checkin-qs"></div>
+  </div>
+</div>
+
+<script>
+const areas = [
+  { name:"Communication",   color:"#C47AAE", desc:"Do you feel heard? Can you say the hard things without it becoming a fight?",         where:"Check-in Space + Conversation Tools" },
+  { name:"Emotional Patterns", color:"#9A8EC4", desc:"Do you understand each other's triggers, schemas, and invisible needs?",              where:"Schema Therapy Module + Needs Maps" },
+  { name:"Repair & Conflict", color:"#C4847A", desc:"When things break, do you move toward each other or manage distance?",              where:"Repair Space" },
+  { name:"Connection & Rituals", color:"#C9A96E", desc:"Is there warmth, closeness, and intentional time — not just coexistence?",    where:"Rituals & Connection Habits" },
+  { name:"Shared Future",   color:"#7A9E8A", desc:"Do you have a shared vision? Are you building something together?",                  where:"Future, Dreams & Direction" },
+  { name:"Foundation",      color:"#7AAEC4", desc:"Are your values, boundaries, and promises named and agreed upon?",                   where:"Relationship Constitution" },
+];
+
+const scores = areas.map(()=>5);
+const cx=240, cy=240, maxR=170, minR=24;
+const N=areas.length;
+const step=Math.PI*2/N;
+
+function draw() {
+  const c=document.getElementById('radar');
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,480,480);
+
+  // Grid
+  [2,4,6,8,10].forEach(r=>{
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const a=i*step-Math.PI/2;
+      const rad=minR+(maxR-minR)*r/10;
+      i===0?ctx.moveTo(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad):ctx.lineTo(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad);
+    }
+    ctx.closePath();
+    ctx.strokeStyle=r===10?'rgba(255,200,220,0.1)':'rgba(255,200,220,0.04)';
+    ctx.lineWidth=1; ctx.stroke();
+  });
+
+  // Axes
+  for(let i=0;i<N;i++){
+    const a=i*step-Math.PI/2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(a)*maxR,cy+Math.sin(a)*maxR);
+    ctx.strokeStyle='rgba(255,200,220,0.05)'; ctx.lineWidth=1; ctx.stroke();
+  }
+
+  // Filled shape
+  ctx.beginPath();
+  for(let i=0;i<N;i++){
+    const a=i*step-Math.PI/2;
+    const rad=minR+(maxR-minR)*scores[i]/10;
+    i===0?ctx.moveTo(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad):ctx.lineTo(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(196,122,174,0.08)'; ctx.fill();
+  ctx.strokeStyle='rgba(196,122,174,0.5)'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Dots + labels
+  for(let i=0;i<N;i++){
+    const a=i*step-Math.PI/2;
+    const rad=minR+(maxR-minR)*scores[i]/10;
+    const color=areas[i].color;
+    const low=scores[i]<=3;
+
+    // Segment tint
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,rad,a,(i+1)*step-Math.PI/2); ctx.closePath();
+    ctx.fillStyle=low?'rgba(196,132,122,0.1)':color+'10'; ctx.fill();
+
+    // Dot
+    const dx=cx+Math.cos(a)*rad, dy=cy+Math.sin(a)*rad;
+    ctx.beginPath(); ctx.arc(dx,dy,4,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+
+    // Label
+    const lr=maxR+30;
+    const lx=cx+Math.cos(a)*lr, ly=cy+Math.sin(a)*lr;
+    ctx.font='300 10px DM Sans'; ctx.fillStyle='rgba(240,228,240,0.55)';
+    ctx.textAlign=lx>cx+5?'left':lx<cx-5?'right':'center';
+    ctx.textBaseline=ly>cy+5?'top':ly<cy-5?'bottom':'middle';
+    const words=areas[i].name.split(' & ');
+    words.forEach((w,wi)=>ctx.fillText(w+(words.length>1&&wi<words.length-1?' &':''),lx,ly+wi*13));
+
+    // Score
+    const sr=rad-20;
+    if(sr>minR){ ctx.font='300 9px DM Mono'; ctx.fillStyle=color+'99'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(scores[i],cx+Math.cos(a)*sr,cy+Math.sin(a)*sr); }
+  }
+
+  // Center
+  ctx.beginPath(); ctx.arc(cx,cy,minR-4,0,Math.PI*2);
+  ctx.fillStyle='#160D16'; ctx.fill();
+  ctx.font='300 9px DM Mono'; ctx.fillStyle='#5A4058'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText((scores.reduce((a,b)=>a+b,0)/N).toFixed(1),cx,cy);
+}
+
+function buildAreas() {
+  const grid=document.getElementById('areas-grid');
+  areas.forEach((area,i)=>{
+    const card=document.createElement('div'); card.className='area-card';
+    card.innerHTML=`
+      <div class="area-top">
+        <div class="area-name" style="color:${area.color}">${area.name}</div>
+        <div class="area-score" id="sc-${i}" style="color:${area.color}">${scores[i]}</div>
+      </div>
+      <div class="area-desc">${area.desc}</div>
+      <input type="range" class="area-slider" min="1" max="10" value="${scores[i]}"
+        style="--c:${area.color}"
+        oninput="update(${i},this.value)"
+        onmouseenter="highlight(${i})"
+        onmouseleave="unhighlight()">
+    `;
+    const slider=card.querySelector('input');
+    slider.style.setProperty('--c',area.color);
+    slider.addEventListener('input',e=>update(i,e.target.value));
+    const thumb=document.createElement('style');
+    thumb.textContent=`input[data-idx="${i}"]::-webkit-slider-thumb{background:${area.color};box-shadow:0 0 8px ${area.color}55}`;
+    card.querySelector('input').setAttribute('data-idx',i);
+    document.head.appendChild(thumb);
+    grid.appendChild(card);
+  });
+
+  // Global thumb style
+  const st=document.createElement('style');
+  areas.forEach((a,i)=>{ st.textContent+=`input[data-idx="${i}"]::-webkit-slider-thumb{background:${a.color};box-shadow:0 0 6px ${a.color}44;}`; });
+  document.head.appendChild(st);
+}
+
+function update(i,val) {
+  scores[i]=parseInt(val);
+  document.getElementById(`sc-${i}`).textContent=val;
+  draw(); updateStatus();
+}
+function highlight(i){} function unhighlight(){}
+
+function updateStatus() {
+  const avg=(scores.reduce((a,b)=>a+b,0)/N).toFixed(1);
+  document.getElementById('stat-avg').textContent=avg+'/10';
+
+  const sorted=[...scores.map((s,i)=>({s,i}))].sort((a,b)=>b.s-a.s);
+  document.getElementById('stat-strong').textContent=areas[sorted[0].i].name.split(' ')[0];
+  document.getElementById('stat-attn').textContent=areas[sorted[sorted.length-1].i].name.split(' ')[0];
+
+  const a=parseFloat(avg);
+  let sig;
+  if(a>=8) sig="The foundation is strong. Use the system to deepen, not just repair.";
+  else if(a>=6) sig="Mostly solid — but something is being managed around. The low areas are telling you something.";
+  else if(a>=4) sig="Imbalance is the signal. The drag is in specific areas, not the whole relationship.";
+  else sig="Real attention is needed here. The system is built for exactly this.";
+  document.getElementById('signal-text').textContent=sig;
+
+  // Attention list
+  const attn=document.getElementById('attn-list'); attn.innerHTML='';
+  sorted.slice().reverse().slice(0,3).forEach(({s,i},rank)=>{
+    if(s<=7){
+      attn.innerHTML+=`<div class="attn-row">
+        <div class="attn-rank">0${rank+1}</div>
+        <div class="attn-name" style="color:${areas[i].color}">${areas[i].name}</div>
+        <div class="attn-score-wrap">
+          <div class="attn-bar-track"><div class="attn-bar-fill" style="width:${s*10}%;background:${areas[i].color}"></div></div>
+          <div class="attn-num" style="color:${areas[i].color}">${s}/10</div>
+        </div>
+        <div class="attn-where">→ ${areas[i].where}</div>
+      </div>`;
+    }
+  });
+}
+
+function buildCheckin() {
+  const qs=[
+    "What felt good between us this week — even something small?",
+    "What did I need from you this week that I didn't ask for?",
+    "Where did we repair well — or where do we still need to repair?",
+    "Is there anything I'm avoiding bringing up? What's underneath it?",
+    "What would make next week feel more connected for both of us?",
+    "One thing I want you to know right now:",
+  ];
+  const wrap=document.getElementById('checkin-qs');
+  qs.forEach(q=>{
+    const d=document.createElement('div'); d.className='checkin-q';
+    d.innerHTML=`<span class="cq-check"></span>${q}`;
+    d.addEventListener('click',()=>{
+      d.classList.toggle('done');
+      d.querySelector('.cq-check').textContent=d.classList.contains('done')?'✓':'';
+    });
+    wrap.appendChild(d);
+  });
+}
+
+buildAreas(); buildCheckin(); draw(); updateStatus();
+</script>
+</body>
+</html>

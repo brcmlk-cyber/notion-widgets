@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Which System Is For You? — Hub-B Ecosystem</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0A090C; --s1:#100E14; --s2:#161420;
+    --border:rgba(255,255,255,0.07); --text:#EAE4F0; --muted:#6A6075;
+    --gold:#C9A96E; --rose:#C4847A; --sage:#7A9E8A; --lavender:#9A8EC4; --sky:#7AAEC4; --pink:#C47AAE;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:48px 20px 80px; }
+
+  /* Stars bg */
+  body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 30% 20%, rgba(154,142,196,0.05) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(201,169,110,0.04) 0%, transparent 60%); pointer-events:none; }
+
+  .header { text-align:center; margin-bottom:44px; max-width:560px; }
+  .eyebrow { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.25em; text-transform:uppercase; color:var(--muted); margin-bottom:20px; }
+  h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(28px,5vw,46px); font-weight:300; line-height:1.1; margin-bottom:12px; }
+  h1 em { font-style:italic; color:var(--gold); }
+  .sub { font-size:13px; color:var(--muted); line-height:1.7; }
+
+  .screen { display:none; width:100%; max-width:680px; }
+  .screen.active { display:block; }
+
+  /* PROGRESS */
+  .progress-wrap { margin-bottom:40px; }
+  .progress-meta { display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; color:var(--muted); margin-bottom:10px; text-transform:uppercase; }
+  .progress-bar { height:1px; background:rgba(255,255,255,0.06); }
+  .progress-fill { height:1px; background:linear-gradient(90deg,var(--lavender),var(--gold)); transition:width .5s ease; }
+
+  /* QUESTION */
+  .q-num { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; color:var(--lavender); text-transform:uppercase; margin-bottom:16px; }
+  .q-text { font-family:'Cormorant Garamond',serif; font-size:clamp(20px,3.5vw,30px); font-weight:300; line-height:1.3; margin-bottom:8px; }
+  .q-context { font-family:'Cormorant Garamond',serif; font-size:14px; font-style:italic; color:var(--muted); margin-bottom:36px; }
+
+  .options { display:flex; flex-direction:column; gap:10px; margin-bottom:40px; }
+  .opt { display:flex; align-items:flex-start; gap:14px; padding:16px 18px; background:var(--s1); border:1px solid var(--border); cursor:pointer; transition:all .2s; }
+  .opt:hover { border-color:rgba(154,142,196,0.3); background:rgba(154,142,196,0.04); }
+  .opt.sel { border-color:var(--lavender); background:rgba(154,142,196,0.07); }
+  .opt-dot { width:24px; height:24px; border:1px solid rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); transition:all .2s; margin-top:1px; }
+  .opt.sel .opt-dot { background:var(--lavender); border-color:var(--lavender); color:white; font-size:11px; }
+  .opt-body { flex:1; }
+  .opt-label { font-size:13px; line-height:1.6; }
+  .opt-sub { font-size:11px; color:var(--muted); margin-top:3px; font-style:italic; }
+
+  .nav { display:flex; justify-content:space-between; align-items:center; }
+  .btn-back { background:none; border:none; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); cursor:pointer; padding:0; transition:color .2s; }
+  .btn-back:hover { color:var(--text); }
+  .btn-back:disabled { opacity:.2; cursor:default; }
+  .btn-next { background:none; border:1px solid var(--lavender); color:var(--lavender); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.15em; text-transform:uppercase; padding:12px 28px; cursor:pointer; transition:all .2s; opacity:0; pointer-events:none; }
+  .btn-next.vis { opacity:1; pointer-events:all; }
+  .btn-next:hover { background:var(--lavender); color:var(--bg); }
+
+  /* RESULT */
+  .result-eyebrow { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.25em; text-transform:uppercase; color:var(--muted); margin-bottom:20px; }
+  .result-product { font-family:'Cormorant Garamond',serif; font-size:clamp(32px,6vw,52px); font-weight:300; line-height:1.0; margin-bottom:6px; }
+  .result-tagline { font-family:'Cormorant Garamond',serif; font-size:17px; font-style:italic; color:var(--muted); margin-bottom:32px; }
+  .result-divider { width:40px; height:1px; margin-bottom:28px; }
+  .result-why { font-size:14px; line-height:1.8; color:#C8C0D8; margin-bottom:32px; max-width:560px; }
+  .result-what { background:var(--s1); border:1px solid var(--border); padding:24px 28px; margin-bottom:28px; }
+  .result-what-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; margin-bottom:16px; }
+  .result-what-items { display:flex; flex-direction:column; gap:8px; }
+  .result-what-item { display:flex; align-items:center; gap:12px; font-size:12px; }
+  .result-what-item::before { content:'→'; color:var(--gold); font-family:'DM Mono',monospace; flex-shrink:0; }
+
+  .also-section { margin-bottom:32px; }
+  .also-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  .also-cards { display:flex; gap:10px; flex-wrap:wrap; }
+  .also-card { flex:1; min-width:160px; padding:14px 16px; background:var(--s1); border:1px solid var(--border); cursor:pointer; transition:all .2s; }
+  .also-card:hover { border-color:rgba(201,169,110,0.3); }
+  .also-card-name { font-size:12px; font-weight:400; margin-bottom:4px; }
+  .also-card-desc { font-size:10px; color:var(--muted); }
+
+  .result-cta { padding:28px; text-align:center; margin-bottom:16px; }
+  .result-cta-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; margin-bottom:10px; }
+  .result-cta-text { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:300; margin-bottom:20px; line-height:1.4; }
+  .btn-cta { border:none; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.15em; text-transform:uppercase; padding:14px 36px; cursor:pointer; transition:all .2s; font-weight:400; }
+  .btn-restart { background:none; border:none; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); cursor:pointer; display:block; margin:0 auto; padding:8px; transition:color .2s; }
+  .btn-restart:hover { color:var(--text); }
+
+  .fade-in { animation:fadeUp .4s ease forwards; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .overlay { position:fixed; inset:0; background:var(--bg); z-index:100; pointer-events:none; opacity:0; transition:opacity .25s; }
+  .overlay.on { opacity:1; }
+</style>
+</head>
+<body>
+<div class="overlay" id="ov"></div>
+
+<div class="header">
+  <div class="eyebrow">Hub-B Ecosystem · Product Finder</div>
+  <h1>Which system do<br>you <em>actually</em> need?</h1>
+  <p class="sub">5 questions. Your answer points to the one product that matches where you are right now — not where you want to be.</p>
+</div>
+
+<!-- INTRO -->
+<div class="screen active" id="s-intro" style="text-align:center">
+  <div style="font-size:48px;margin-bottom:28px;animation:fadeUp .6s ease">◈</div>
+  <p style="font-size:14px;color:var(--muted);line-height:1.8;max-width:440px;margin:0 auto 40px">Each system in this collection is designed for a specific kind of stuck. Answer honestly — the questions are short but the answers matter.</p>
+  <button class="btn-next vis" onclick="go('s-q')" style="margin:0 auto">Begin →</button>
+</div>
+
+<!-- QUESTIONS -->
+<div class="screen" id="s-q">
+  <div class="progress-wrap">
+    <div class="progress-meta"><span id="ql">Question 1 of 5</span><span id="qp">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+  </div>
+  <div id="qc" class="fade-in">
+    <div class="q-num" id="qn">01</div>
+    <div class="q-text" id="qt"></div>
+    <div class="q-context" id="qctx"></div>
+    <div class="options" id="qo"></div>
+  </div>
+  <div class="nav">
+    <button class="btn-back" id="bb" onclick="prev()" disabled>← Back</button>
+    <button class="btn-next" id="bn" onclick="next()">Continue →</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="s-result"></div>
+
+<script>
+const qs = [
+  {
+    text: "What's the most honest description of where you are right now?",
+    ctx: "Not the version you'd tell someone else. The real one.",
+    opts: [
+      { label:"I feel foggy — too many options, no clear direction, nothing feels right.", sub:"I need to choose something and actually commit.", tags:{LD:3} },
+      { label:"I keep starting over. Same patterns, same collapses, shorter return speed.", sub:"The floor needs to be rebuilt, not the ceiling.", tags:{IR:3} },
+      { label:"My relationship is drifting. We're not communicating the way I want us to.", sub:"Something needs to be named, held, and worked with together.", tags:{RO:3} },
+      { label:"I have standards but I keep overriding them. I don't protect myself well.", sub:"The issue is access — what gets in, what doesn't.", tags:{SB:3} },
+      { label:"I'm building something. I need systems, clarity, and strategic momentum.", sub:"I want to run my work life like an operator, not a passenger.", tags:{EN:3} },
+    ]
+  },
+  {
+    text: "What have you been tolerating the longest?",
+    ctx: "The thing that's been quietly running in the background for months.",
+    opts: [
+      { label:"A life that doesn't feel like mine anymore — or maybe never did.", sub:"", tags:{LD:2,SB:1} },
+      { label:"Inconsistency. I know who I want to be, but I keep becoming someone else.", sub:"", tags:{IR:2,RB:1} },
+      { label:"Distance or disconnection in my relationship. We're fine, but not close.", sub:"", tags:{RO:2} },
+      { label:"Saying yes when I mean no. Absorbing more than I should.", sub:"", tags:{SB:2,IR:1} },
+      { label:"Scattered energy. Projects, ideas, no real system holding it together.", sub:"", tags:{EN:2,LD:1} },
+    ]
+  },
+  {
+    text: "What would actually change your life if you did it consistently for 90 days?",
+    ctx: "Not what sounds good. What you know would matter.",
+    opts: [
+      { label:"Choosing one direction and building something real around it.", sub:"", tags:{LD:2,RB:1} },
+      { label:"Becoming someone who returns quickly after slipping instead of disappearing.", sub:"", tags:{IR:2} },
+      { label:"Communicating with my partner in a way that actually repairs things.", sub:"", tags:{RO:3} },
+      { label:"Holding a standard consistently — without explaining it every single time.", sub:"", tags:{SB:2,IR:1} },
+      { label:"Running my business with real structure, not just momentum and hope.", sub:"", tags:{EN:3} },
+    ]
+  },
+  {
+    text: "When you imagine opening a Notion system right now, what do you most want it to do?",
+    ctx: "What function would actually make you use it?",
+    opts: [
+      { label:"Show me what's true about my life and help me choose one direction.", sub:"", tags:{LD:3} },
+      { label:"Track my identity day by day — state, slips, returns, patterns.", sub:"", tags:{IR:3} },
+      { label:"Give my relationship a shared structure — check-ins, repair, depth.", sub:"", tags:{RO:3} },
+      { label:"Hold my standards, log my boundary moments, name my patterns.", sub:"", tags:{SB:3} },
+      { label:"Organize my strategy, content, and execution in one operational space.", sub:"", tags:{EN:3} },
+    ]
+  },
+  {
+    text: "What does 'stuck' feel like for you most of the time?",
+    ctx: "Pick the one that resonates most physically.",
+    opts: [
+      { label:"Foggy — I can't see a clear next step and every option looks equally valid or pointless.", sub:"", tags:{LD:2,SB:1} },
+      { label:"Cycling — I know exactly what to do but I keep not doing it, then feeling worse.", sub:"", tags:{IR:3} },
+      { label:"Disconnected — from myself, from my partner, from what I actually want.", sub:"", tags:{RO:2,LD:1} },
+      { label:"Overextended — I keep giving more than I should and resenting it quietly.", sub:"", tags:{SB:3} },
+      { label:"Scattered — energy everywhere, no real traction, lots of starting nothing finishing.", sub:"", tags:{EN:2,LD:1} },
+    ]
+  }
+];
+
+const products = {
+  LD: {
+    name:"Life Direction OS",
+    emoji:"🧭",
+    color:"#7AAEC4",
+    tagline:"For the foggy, the scattered, and the ones holding too many doors open.",
+    why:"You don't have a motivation problem. You have a clarity problem — and clarity without a structured process stays theoretical forever. Life Direction OS is a 9-zone decision environment that takes you from honest audit to committed direction to lived container. You're not here to find inspiration. You're here to choose.",
+    what:["Interactive Life Audit Wheel across 8 life areas","Kill / Keep / Explore framework for eliminating before expanding","7-dimension Direction Scoring Engine","90-Day commitment planner with weekly structure","Monthly Recalibration ritual to prevent drift"],
+    also:["IR","SB"]
+  },
+  IR: {
+    name:"30-Day Identity Reset",
+    emoji:"🧱",
+    color:"#C9956E",
+    tagline:"For the person who needs a shorter gap between slipping and returning.",
+    why:"You're not undisciplined. You're running an old identity on new intentions — and the floor keeps giving out. The 30-Day Identity Reset doesn't track habits. It rebuilds the person making the decisions. Identity Mapping, Non-Negotiables, a Daily Reset Tracker with emotional state logging, and a Slip Recovery Protocol designed around one rule: return speed matters more than perfection.",
+    what:["Identity Mapping — name the old self, name the new one","Non-Negotiables Tracker (3–5 only, strictly)","Daily Reset Tracker with identity state + proof system","Slip Recovery Log with same-day return protocol","Weekly Identity Audit — the cycle that converts experience into self-trust"],
+    also:["RB","LD"]
+  },
+  RO: {
+    name:"Relationship OS",
+    emoji:"💞",
+    color:"#C47AAE",
+    tagline:"For couples who want to hear each other more clearly.",
+    why:"A relationship doesn't fail from one big moment. It drifts through hundreds of small unnamed ones. The Relationship OS gives you and your partner a shared architecture: a living Relationship Constitution, Schema Therapy module for recognizing patterns, Needs Maps, Repair Space, weekly check-ins, and a Soulside layer for the deeper invisible work. Not a therapy tool — but it resembles one a little.",
+    what:["Relationship Constitution — values, boundaries, promises","Schema Therapy Module — recognize patterns, not label each other","Needs Maps — love languages, triggers, invisible things","Repair Space — transform conflict into growth records","Soulside — synastry, Human Design, intuitive notes"],
+    also:["SB","LD"]
+  },
+  SB: {
+    name:"Standards & Boundaries OS",
+    emoji:"🛡️",
+    color:"#C4847A",
+    tagline:"Soft nervous system. Sharp standards.",
+    why:"You don't have a boundary problem. You have a pattern problem — and that pattern has been running quietly for a long time. The Standards & Boundaries OS identifies whether you're a Peace Keeper, Absorber, Explainer, or Avoider, then routes you into the room that matches your real work: Standards Vault, Boundary Scripts, Red Flag Library, Self-Respect Log, or Boundaries Tracker.",
+    what:["Boundary Pattern Assessment — identify your pattern first","Standards Vault — write standards clearly enough to stop renegotiating them","Boundary Scripts — fewer words, more shape","Red Flag Library — what stays unnamed stays repeated","Self-Respect Log — track where you held and where you overrode yourself"],
+    also:["IR","LD"]
+  },
+  EN: {
+    name:"The Entrepreneur's Mentor OS",
+    emoji:"🚀",
+    color:"#C9A96E",
+    tagline:"A premium founder operating environment for strategic clarity and long-range momentum.",
+    why:"You're not lacking ideas. You're lacking an operating environment that holds everything together — strategy, execution, content, and growth — without requiring you to rebuild the container every week. The Entrepreneur's Mentor OS is a full founder system with 3-month curriculum, Social Media Studio, Implementation Tracker, Bonus Library, and Audio Library. Built for the founder who wants to run their work life, not just survive it.",
+    what:["Full 3-month curriculum — Month 1: idea to reality, Month 2: idea to system, Month 3: integration","Social Media Studio — turn insight into visibility","Implementation Tracker + Upload Checklist","Bonus Library + Audio Library for depth","Command Center dashboard for live operational clarity"],
+    also:["LD","IR"]
+  },
+  RB: {
+    name:"90-Day Reinvention System",
+    emoji:"🌒",
+    color:"#9A8EC4",
+    tagline:"Not a comeback. A structural reconstruction.",
+    why:"The 30-Day Reset builds the floor. The 90-Day Reinvention builds everything above it. This is for the person who is done trying to 'get back on track' — and wants to become structurally different across three cycles: Disrupt the old pattern (Days 1–30), Build the new structure (31–60), Embody and stabilize (61–90). Six databases. One real arc.",
+    what:["Identity Rewrite database — who is ending, who is emerging","Standards Tracker — what you no longer tolerate from yourself","Daily Architecture Tracker — turn reinvention into a repeatable day shape","90-Day Reinvention Planner — weekly arc with identity goal + proof","Environment Reset Board — remove structural friction, not just bad habits"],
+    also:["IR","SB"]
+  }
+};
+
+const pNames = {LD:"Life Direction OS",IR:"30-Day Identity Reset",RO:"Relationship OS",SB:"Standards & Boundaries OS",EN:"Entrepreneur's Mentor OS",RB:"90-Day Reinvention"};
+
+let cur=0, ans=[], scores={LD:0,IR:0,RO:0,SB:0,EN:0,RB:0};
+
+function go(id) { ov(()=>{ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }); }
+function ov(cb) { const o=document.getElementById('ov'); o.classList.add('on'); setTimeout(()=>{ cb(); setTimeout(()=>o.classList.remove('on'),80); },220); }
+
+function renderQ() {
+  const q=qs[cur]; const pct=Math.round(cur/qs.length*100);
+  document.getElementById('ql').textContent=`Question ${cur+1} of ${qs.length}`;
+  document.getElementById('qp').textContent=pct+'%';
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('qn').textContent=String(cur+1).padStart(2,'0');
+  document.getElementById('qt').textContent=q.text;
+  document.getElementById('qctx').textContent=q.ctx;
+
+  const qc=document.getElementById('qc'); qc.classList.remove('fade-in'); void qc.offsetWidth; qc.classList.add('fade-in');
+
+  const opts=document.getElementById('qo'); opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const d=document.createElement('div'); d.className='opt'+(ans[cur]===i?' sel':'');
+    d.innerHTML=`<div class="opt-dot">${ans[cur]===i?'✦':String.fromCharCode(65+i)}</div><div class="opt-body"><div class="opt-label">${o.label}</div>${o.sub?`<div class="opt-sub">${o.sub}</div>`:''}</div>`;
+    d.onclick=()=>selectOpt(i);
+    opts.appendChild(d);
+  });
+  document.getElementById('bn').classList.toggle('vis', ans[cur]!==undefined);
+  document.getElementById('bb').disabled = cur===0;
+}
+
+function selectOpt(i) {
+  ans[cur]=i;
+  document.querySelectorAll('.opt').forEach((el,j)=>{
+    el.classList.toggle('sel',j===i);
+    el.querySelector('.opt-dot').textContent = j===i?'✦':String.fromCharCode(65+j);
+  });
+  document.getElementById('bn').classList.add('vis');
+}
+
+function next() {
+  if(ans[cur]===undefined) return;
+  if(cur<qs.length-1){cur++;ov(renderQ);}
+  else showResult();
+}
+function prev(){if(cur>0){cur--;ov(renderQ);}}
+
+function showResult() {
+  scores={LD:0,IR:0,RO:0,SB:0,EN:0,RB:0};
+  ans.forEach((a,qi)=>{
+    const tags=qs[qi].opts[a].tags;
+    Object.entries(tags).forEach(([k,v])=>{scores[k]=(scores[k]||0)+v;});
+  });
+  const winner=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+  const p=products[winner];
+
+  const also=p.also.filter(k=>scores[k]>0).sort((a,b)=>scores[b]-scores[a]).slice(0,2);
+
+  const r=document.getElementById('s-result');
+  r.innerHTML=`
+    <div class="result-eyebrow">◈ Your System</div>
+    <div class="result-product" style="color:${p.color}">${p.emoji} ${p.name}</div>
+    <div class="result-tagline">${p.tagline}</div>
+    <div class="result-divider" style="background:${p.color}"></div>
+    <div class="result-why">${p.why}</div>
+    <div class="result-what">
+      <div class="result-what-label" style="color:${p.color}">◈ What's Inside</div>
+      <div class="result-what-items">${p.what.map(w=>`<div class="result-what-item">${w}</div>`).join('')}</div>
+    </div>
+    ${also.length?`<div class="also-section">
+      <div class="also-label">↳ Also relevant for you</div>
+      <div class="also-cards">${also.map(k=>`<div class="also-card"><div class="also-card-name">${products[k].emoji} ${products[k].name}</div><div class="also-card-desc">${products[k].tagline}</div></div>`).join('')}</div>
+    </div>`:''}
+    <div class="result-cta" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)">
+      <div class="result-cta-label" style="color:${p.color}">◈ ${p.name}</div>
+      <div class="result-cta-text">You have the system. Now open it and begin where it tells you to.</div>
+      <button class="btn-cta" style="background:${p.color};color:#0A090C">Open the System →</button>
+    </div>
+    <button class="btn-restart" onclick="restart()">↺ Retake</button>
+  `;
+  go('s-result');
+}
+
+function restart(){scores={LD:0,IR:0,RO:0,SB:0,EN:0,RB:0};cur=0;ans=[];go('s-intro');}
+
+document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('s-q').classList.contains('active'))renderQ();});
+document.getElementById('s-intro').querySelector('button').onclick=()=>{go('s-q');setTimeout(renderQ,300);};
+</script>
+</body>
+</html>
