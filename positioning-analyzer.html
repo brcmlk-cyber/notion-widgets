@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Positioning Analyzer · Entrepreneur's Mentor OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#090B0A;--s1:#0F1210;--s2:#141A14;--border:rgba(180,220,160,0.08);--text:#E4EDE0;--muted:#5A6E55;--gold:#C9A96E;--green:#7A9E6A;--sage:#9EC47A;--em:#6EC49A;--red:#C4847A;--purple:#9A8EC4;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;padding:40px 20px 80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(122,158,106,0.06) 0%,transparent 50%);pointer-events:none;}
+
+.header{text-align:center;margin-bottom:36px;}
+.label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(24px,4.5vw,40px);font-weight:300;margin-bottom:8px;}
+h1 em{font-style:italic;color:var(--gold);}
+.sub{font-size:13px;color:var(--muted);max-width:500px;margin:0 auto;line-height:1.7;}
+
+.outer{max-width:820px;margin:0 auto;}
+
+.panel{background:var(--s1);border:1px solid var(--border);padding:28px;margin-bottom:16px;}
+.panel-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.field{margin-bottom:16px;}
+.field label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;}
+.field input,.field textarea,.field select{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;padding:10px 13px;outline:none;resize:none;transition:border-color .2s;-webkit-appearance:none;}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:rgba(122,158,106,0.4);}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted);font-size:11px;}
+.field select option{background:#0F1210;}
+
+.maturity-row{display:flex;gap:6px;}
+.m-btn{flex:1;padding:9px 6px;background:var(--s2);border:1px solid transparent;cursor:pointer;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);transition:all .2s;text-align:center;}
+.m-btn:hover{border-color:rgba(122,158,106,0.3);}
+.m-btn.active{border-color:var(--green);color:var(--green);background:rgba(122,158,106,0.06);}
+
+.btn-gen{width:100%;background:var(--green);color:var(--bg);border:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:16px;cursor:pointer;transition:all .25s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:400;}
+.btn-gen:hover{background:var(--sage);}
+.btn-gen:disabled{opacity:.4;cursor:not-allowed;}
+.spin{display:none;width:14px;height:14px;border:2px solid rgba(0,0,0,.15);border-top-color:var(--bg);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* OUTPUT */
+.output{display:none;margin-top:16px;}
+.output.visible{display:block;}
+
+.out-card{background:var(--s1);border:1px solid var(--border);padding:24px;margin-bottom:12px;}
+.out-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.out-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;}
+.btn-cp{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;cursor:pointer;transition:all .2s;}
+.btn-cp:hover{border-color:var(--green);color:var(--green);}
+.btn-cp.done{border-color:var(--em);color:var(--em);}
+
+.positioning-statement{padding:24px;border:1px solid rgba(201,169,110,0.2);background:rgba(201,169,110,0.04);margin-bottom:12px;text-align:center;}
+.ps-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;}
+.ps-text{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;line-height:1.45;color:var(--text);}
+
+.body-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:300;line-height:1.8;color:rgba(228,237,224,.85);}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.06em;padding:5px 10px;background:var(--s2);border:1px solid var(--border);color:var(--muted);}
+
+.gap-item{padding:12px 16px;background:var(--s2);border-left:2px solid var(--red);margin-bottom:8px;font-size:13px;line-height:1.5;}
+.opp-item{padding:12px 16px;background:var(--s2);border-left:2px solid var(--em);margin-bottom:8px;font-size:13px;line-height:1.5;}
+
+.btn-all{width:100%;background:none;border:1px solid rgba(201,169,110,0.25);color:var(--gold);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:13px;cursor:pointer;transition:all .2s;margin-top:4px;}
+.btn-all:hover{background:rgba(201,169,110,0.06);}
+
+@media(max-width:580px){.two-col{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="label">Entrepreneur's Mentor OS · Strategic Positioning</div>
+  <h1>Niche <em>Positioning</em> Analyzer</h1>
+  <p class="sub">Describe what you do, who you serve, and what makes you different. Claude builds your positioning statement, content DNA, audience map, and gaps your competitors are leaving open.</p>
+</div>
+
+<div class="outer">
+  <div class="panel">
+    <div class="panel-title">◈ Your Business Context</div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>Your name / brand</label>
+        <input id="brand" placeholder="Your name or brand name">
+      </div>
+      <div class="field">
+        <label>Business maturity</label>
+        <div class="maturity-row" id="maturity-row">
+          <button class="m-btn" onclick="selM('idea',this)">Idea</button>
+          <button class="m-btn" onclick="selM('early',this)">Early</button>
+          <button class="m-btn" onclick="selM('growing',this)">Growing</button>
+          <button class="m-btn" onclick="selM('established',this)">Established</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>What you do — in plain language</label>
+      <textarea id="what" rows="3" placeholder="Describe what you actually do. Not the elevator pitch — what the work actually is. What do you make, deliver, or help with?"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Who you serve — be specific</label>
+      <textarea id="who" rows="3" placeholder="Not 'entrepreneurs.' Who specifically? What are they trying to do? What stage are they at? What keeps them stuck?"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Your unfair advantage — what you have that's genuinely hard to replicate</label>
+      <textarea id="advantage" rows="3" placeholder="Your lived experience, methodology, perspective, access, story, combination of skills…"></textarea>
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>Your closest competitor or comparison</label>
+        <input id="competitor" placeholder="Who do people compare you to?">
+      </div>
+      <div class="field">
+        <label>What they get wrong or miss</label>
+        <input id="gap" placeholder="What does the competitor NOT offer that you do?">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Your current biggest positioning frustration</label>
+      <textarea id="frustration" rows="2" placeholder="What feels unclear, inconsistent, or wrong about how you currently describe what you do?"></textarea>
+    </div>
+
+    <button class="btn-gen" id="gen-btn" onclick="generate()">
+      <div class="spin" id="sp"></div>
+      <span id="gen-lbl">Analyze & Position →</span>
+    </button>
+  </div>
+
+  <div class="output" id="output">
+
+    <div class="positioning-statement">
+      <div class="ps-label">◈ Your Positioning Statement</div>
+      <div class="ps-text" id="out-positioning"></div>
+      <button class="btn-cp" style="margin-top:14px" onclick="cp2(this,'out-positioning')">Copy</button>
+    </div>
+
+    <div class="out-card">
+      <div class="out-header">
+        <div class="out-title" style="color:var(--gold)">◈ Your Content DNA</div>
+        <button class="btn-cp" onclick="cp2(this,'out-dna')">Copy</button>
+      </div>
+      <div class="body-text" id="out-dna" style="margin-bottom:12px;"></div>
+      <div class="tag-row" id="out-tags"></div>
+    </div>
+
+    <div class="out-card">
+      <div class="out-header">
+        <div class="out-title" style="color:var(--purple)">◈ Audience Map — Who Actually Buys</div>
+        <button class="btn-cp" onclick="cp2(this,'out-audience')">Copy</button>
+      </div>
+      <div class="body-text" id="out-audience"></div>
+    </div>
+
+    <div class="out-card">
+      <div class="out-header">
+        <div class="out-title" style="color:var(--red)">◈ Market Gaps You're Sitting On</div>
+      </div>
+      <div id="out-gaps"></div>
+    </div>
+
+    <div class="out-card">
+      <div class="out-header">
+        <div class="out-title" style="color:var(--em)">◈ Opportunities — Underused Angles</div>
+      </div>
+      <div id="out-opps"></div>
+    </div>
+
+    <div class="out-card">
+      <div class="out-header">
+        <div class="out-title" style="color:var(--green)">◈ What to Say This Week</div>
+        <button class="btn-cp" onclick="cp2(this,'out-now')">Copy</button>
+      </div>
+      <div class="body-text" id="out-now"></div>
+    </div>
+
+    <button class="btn-all" onclick="copyAll()">↗ Copy Full Analysis to Clipboard</button>
+  </div>
+</div>
+
+<script>
+let maturity = '';
+let loading = false;
+let lastResult = null;
+
+function selM(m, btn) {
+  maturity = m;
+  document.querySelectorAll('.m-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function generate() {
+  const brand = document.getElementById('brand').value.trim();
+  const what = document.getElementById('what').value.trim();
+  const who = document.getElementById('who').value.trim();
+  const advantage = document.getElementById('advantage').value.trim();
+  const competitor = document.getElementById('competitor').value.trim();
+  const gap = document.getElementById('gap').value.trim();
+  const frustration = document.getElementById('frustration').value.trim();
+
+  if (!what || !who) { alert('Please fill in what you do and who you serve.'); return; }
+  if (loading) return;
+
+  loading = true;
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  document.getElementById('sp').style.display = 'block';
+  document.getElementById('gen-lbl').textContent = 'Analyzing…';
+
+  const prompt = `You are a strategic positioning advisor for entrepreneurs and creators. Your job is to help them find a sharp, authentic, and differentiated market position — not a generic statement.
+
+BRAND: ${brand || 'Unspecified'}
+MATURITY: ${maturity || 'early stage'}
+WHAT THEY DO: ${what}
+WHO THEY SERVE: ${who}
+UNFAIR ADVANTAGE: ${advantage || 'not specified'}
+CLOSEST COMPETITOR: ${competitor || 'not specified'}
+WHAT COMPETITOR MISSES: ${gap || 'not specified'}
+POSITIONING FRUSTRATION: ${frustration || 'not specified'}
+
+Generate a full positioning analysis as ONLY valid JSON (no markdown):
+
+{
+  "positioning": "A 1-2 sentence positioning statement. Specific. Distinctive. Addresses the real person, the real problem, the real differentiator. Not generic.",
+  "dna": "2-3 sentences describing the content DNA — the authority territory, recurring theme, and unique angle that all their content should come from.",
+  "tags": ["3-5 short content/authority tags — the topics they should own, 2-4 words each"],
+  "audience": "2-3 sentences describing who actually buys — not demographics, but psychographics. What they're trying to escape. What they're moving toward. What makes them choose this person over alternatives.",
+  "gaps": [
+    "A specific market gap this person is positioned to fill — underserved need, underrepresented voice, or undervalued approach.",
+    "Second gap — something competitors ignore or mishandle.",
+    "Third gap — something the market is ready for that doesn't exist clearly yet."
+  ],
+  "opportunities": [
+    "An underused content or positioning angle they should be using now.",
+    "A format, channel, or framing shift that would sharpen their signal.",
+    "An audience subsegment or problem framing they're underserving."
+  ],
+  "now": "2-3 sentences of what they should be saying and doing THIS WEEK to embody their positioning. Specific content direction, not motivational."
+}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.find(b=>b.type==='text')?.text||'';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    lastResult = parsed;
+    renderOutput(parsed);
+  } catch(e) {
+    alert('Something went wrong. Please try again.');
+  }
+
+  loading = false;
+  btn.disabled = false;
+  document.getElementById('sp').style.display = 'none';
+  document.getElementById('gen-lbl').textContent = 'Re-analyze →';
+}
+
+function renderOutput(d) {
+  document.getElementById('out-positioning').textContent = d.positioning;
+  document.getElementById('out-dna').textContent = d.dna;
+  document.getElementById('out-tags').innerHTML = d.tags.map(t=>`<div class="tag">${t}</div>`).join('');
+  document.getElementById('out-audience').textContent = d.audience;
+  document.getElementById('out-gaps').innerHTML = d.gaps.map(g=>`<div class="gap-item">${g}</div>`).join('');
+  document.getElementById('out-opps').innerHTML = d.opportunities.map(o=>`<div class="opp-item">${o}</div>`).join('');
+  document.getElementById('out-now').textContent = d.now;
+  document.getElementById('output').classList.add('visible');
+  document.getElementById('output').scrollIntoView({behavior:'smooth'});
+}
+
+function cp2(btn, id) {
+  navigator.clipboard.writeText(document.getElementById(id).innerText.trim());
+  btn.textContent='✓'; btn.classList.add('done');
+  setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('done');},2000);
+}
+
+function copyAll() {
+  if(!lastResult) return;
+  const d = lastResult;
+  const text = `POSITIONING ANALYSIS — ${document.getElementById('brand').value||'My Brand'}\n\nPOSITIONING STATEMENT\n${d.positioning}\n\nCONTENT DNA\n${d.dna}\nTags: ${d.tags.join(' · ')}\n\nAUDIENCE MAP\n${d.audience}\n\nMARKET GAPS\n${d.gaps.map((g,i)=>`${i+1}. ${g}`).join('\n')}\n\nOPPORTUNITIES\n${d.opportunities.map((o,i)=>`${i+1}. ${o}`).join('\n')}\n\nTHIS WEEK\n${d.now}`;
+  navigator.clipboard.writeText(text);
+  const btn = document.querySelector('.btn-all');
+  btn.textContent='✓ Copied'; setTimeout(()=>btn.textContent='↗ Copy Full Analysis to Clipboard',2500);
+}
+</script>
+</body>
+</html>
